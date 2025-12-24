@@ -1,0 +1,36 @@
+# Build results
+bin/
+obj/
+[Bb]uild/
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio files
+.vs/
+*.user
+*.userosscache
+*.suo
+*.sln.docstates
+
+# Packages
+packages/
+*.nupkg
+
+# Logs
+*.log
+
+# Publish profiles
+*.pubxml
+*.publishsettings
+
+# Resharper
+_ReSharper*/
+*.DotSettings.user
+
+# Rider
+.idea/
+
+# Others
+Thumbs.db
+*.cache
+*.tmp
