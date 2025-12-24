@@ -2,27 +2,37 @@
 {
     public class Position
     {
-        public int Row { get; set; }
-        public int Col { get; set; }
+        public double X { get; set; }
+        public double Y { get; set; }
 
-        public Position(int row, int col)
+        public Position()
         {
-            Row = row;
-            Col = col;
+            X = 0;
+            Y = 0;
         }
 
-        public Position Translate(Direction direction) => new(Row + direction.RowOffset, Col + direction.ColOffset);
+        public Position(double x, double y)
+        {
+            X = x;
+            Y = y;
+        }
+
+        public void Move(double dx, double dy)
+        {
+            X += dx;
+            Y += dy; 
+        }
 
         public override bool Equals(object obj)
         {
             return obj is Position position &&
-                   Row == position.Row &&
-                   Col == position.Col;
+                X == position.X &&
+                Y == position.Y;
         }
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(Row, Col);
+            return HashCode.Combine(X, Y);
         }
 
         public static bool operator ==(Position left, Position right)

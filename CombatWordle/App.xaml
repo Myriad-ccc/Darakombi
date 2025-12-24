@@ -1,9 +1,17 @@
-﻿<Application x:Class="CombatWordle.App"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:CombatWordle"
-             StartupUri="MainWindow.xaml">
+﻿<Application
+    x:Class="CombatWordle.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:CombatWordle"
+    StartupUri="MainWindow.xaml">
     <Application.Resources>
         <FontFamily x:Key="MainFont">Assets/#VCR OSD Mono</FontFamily>
+        <!--<SolidColorBrush x:Key="ClosingColor">#9c150e</SolidColorBrush>
+        <SolidColorBrush x:Key="MinimizeColor">#1566bd</SolidColorBrush>-->
+
+        <SolidColorBrush x:Key="TileEmpty" Color="#141414" />
+
+        <SolidColorBrush x:Key="TilePlayer" Color="#305CDE" />
+        <SolidColorBrush x:Key="TilePlayerBorder" Color="#6495ED" />
     </Application.Resources>
 </Application>

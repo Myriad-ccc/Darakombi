@@ -4,9 +4,9 @@
     {
         public PlayerColor Color { get; }
 
-        public Player(int width = 2, int height = 2) : base(width, height)
+        public Player()
         {
-            Color = PlayerColor.Default;
+            //Color = PlayerColor.Default;
         }
     }
 
