@@ -164,6 +164,13 @@
                     <TranslateTransform x:Name="CameraTransform" X="0" Y="0" />
                 </Canvas.RenderTransform>
             </Canvas>
+            <TextBlock x:Name="DebugText"
+                       FontSize="32"
+                       Foreground="White"
+                       HorizontalAlignment="Left"
+                       VerticalAlignment="Top"
+                       Text="Test"
+                       MouseUp="DebugText_MouseUp"/>
         </Grid>
     </Grid>
 </Window>

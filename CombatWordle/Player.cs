@@ -2,17 +2,18 @@
 {
     public class Player : Entity
     {
-        public PlayerColor Color { get; }
+        public double Speed { get; private set; }
+        public double DX { get; set; } = 0;
+        public double DY { get; set; } = 0;
 
-        public Player()
+        public Player(double width = 64, double height = 64, double speed = 10) : base(width, height)
         {
-            //Color = PlayerColor.Default;
-        }
-    }
+            Width = width;
+            Height = height;
+            Speed = speed;
 
-    public enum PlayerColor
-    {
-        Default,
-        //TODO
+            Visual.Background = Brushes.CornflowerBlue;
+            Visual.BorderBrush = Brushes.RoyalBlue;
+        }
     }
 }

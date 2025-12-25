@@ -4,27 +4,39 @@
     {
         public Position WorldPos { get; set; } = new Position();
 
-        public double Width { get; private set; }
-        public double Height { get; private set; }
+        public double Width { get; set; }
+        public double Height { get; set; }
 
-        public double Speed { get; private set; }
-        public double DX { get; set; } = 0;
-        public double DY { get; set; } = 0;
+        public Border Visual = new();
 
-        public Border Visual;
+        public double X => WorldPos.X;
+        public double Y => WorldPos.Y;
 
-        public Entity(double width = 64, double height = 64, double speed = 50)
+        public double Area => Width * Height;
+        public double Parameter => 2 * (Width + Height);
+
+        public double Thickness => Math.Max(Math.Max(Visual.BorderThickness.Top, Visual.BorderThickness.Left), Math.Max(Visual.BorderThickness.Bottom, Visual.BorderThickness.Right));
+        public double ActualWidth => Width - 2 * Thickness;
+        public double ActualHeight => Height - 2 * Thickness;
+
+        public Entity() { }
+
+        public Entity(double width, double height)
         {
             Width = width;
             Height = height;
-            Speed = speed;
-            Visual = new Border()
-            {
-                Width = Width,
-                Height = Height,
-                Background = Brushes.CornflowerBlue,
-                BorderThickness = new Thickness(2)
-            };
+
+            Visual.Width = Width;
+            Visual.Height = Height;
+            Visual.BorderThickness = new Thickness(Area / (4 * Parameter));
+        }
+
+        public void UpdateDimensions(double width, double height)
+        {
+            Width = width;
+            Height = height;
+            Visual.Width = width;
+            Visual.Height = height;
         }
     }
 }

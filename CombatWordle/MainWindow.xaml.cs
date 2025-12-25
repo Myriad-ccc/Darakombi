@@ -2,6 +2,7 @@
 global using System.Windows.Controls;
 global using System.Windows.Input;
 global using System.Windows.Media;
+using System.Text;
 using System.Windows.Threading;
 
 namespace CombatWordle
@@ -12,8 +13,11 @@ namespace CombatWordle
         private Point DragOffset;
         private readonly HashSet<Key> PressedKeys = [];
 
-        private GameState gameState;
+        private GameState game;
         private Player player;
+        private Map map;
+
+        private StringBuilder debugInfo = new();
 
         private void Form_MouseDown(object sender, MouseButtonEventArgs e)
         {
@@ -60,6 +64,11 @@ namespace CombatWordle
         private void ClosingButton_Click(object sender, RoutedEventArgs e) => Application.Current.Shutdown();
         private void MinimizeButton_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
         private void QuitButton_Click(object sender, RoutedEventArgs e) => Application.Current.Shutdown();
+        private void DebugText_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Right)
+                DebugText.Visibility = Visibility.Hidden;
+        }
 
         private void FirstModeButton_Click(object sender, RoutedEventArgs e)
         {
@@ -82,17 +91,10 @@ namespace CombatWordle
             TitleText.Foreground = QOL.RandomColor();
             TitleTextShadow.Foreground = QOL.RandomColor();
 
-            gameState = new GameState();
-            var map = new Border()
-            {
-                Width = gameState.MapWidth,
-                Height = gameState.MapHeight,
-                Background = QOL.RGB(20),
-                BorderBrush = QOL.RGB(15),
-                BorderThickness = new Thickness(50)
-            };
-            GameCanvas.Children.Add(map);
-            player = gameState.Player;
+            game = new GameState();
+            GameCanvas.Children.Add(game.Map);
+            player = game.Player;
+            map = game.Map;
             GameCanvas.Children.Add(player.Visual);
 
             var timer = new DispatcherTimer();
@@ -124,16 +126,31 @@ namespace CombatWordle
                 dy = dy / totalVectorLength * player.Speed;
             }
 
-            gameState.Player.WorldPos.Move(dx, dy);
+            player.WorldPos.Move(dx, dy);
 
-            Canvas.SetLeft(gameState.Player.Visual, gameState.Player.WorldPos.X);
-            Canvas.SetTop(gameState.Player.Visual, gameState.Player.WorldPos.Y);
+            player.WorldPos.X = Math.Max(map.Thickness, Math.Min(player.WorldPos.X, game.Map.Width - map.Thickness));
+            player.WorldPos.Y = Math.Max(map.Thickness, Math.Min(player.WorldPos.Y, game.Map.Height - map.Thickness));
+
+            Canvas.SetLeft(player.Visual, player.WorldPos.X);
+            Canvas.SetTop(player.Visual, player.WorldPos.Y);
+
+            debugInfo.Clear();
+            debugInfo.Append($"dx: {dx:F1}\ndy: {dy:F1}\n");
 
             if (PressedKeys.Contains(Key.K) && canCheck)
             {
                 QOL.WriteOut($"{player.WorldPos.X:F0}, {player.WorldPos.Y:F0}");
                 canCheck = false;
                 PressedKeys.Remove(Key.K);
+            }
+
+            if (PressedKeys.Contains(Key.R))
+            {
+                PressedKeys.Remove(Key.R);
+                game.AddRock();
+                GameCanvas.Children.Add(game.rock.Visual);
+                Canvas.SetLeft(game.rock.Visual, game.rock.WorldPos.X);
+                Canvas.SetTop(game.rock.Visual, game.rock.WorldPos.Y);
             }
         }
 
@@ -148,19 +165,27 @@ namespace CombatWordle
             double offsetX = screenCenterX - px;
             double offsetY = screenCenterY - py;
 
-            offsetX = Math.Min(0, Math.Max(offsetX, ActualWidth - gameState.MapWidth));
-            offsetY = Math.Min(0, Math.Max(offsetY, ActualHeight - gameState.MapHeight));
+            offsetX = Math.Min(0, Math.Max(offsetX, ActualWidth - game.Map.Width));
+            offsetY = Math.Min(0, Math.Max(offsetY, ActualHeight - game.Map.Height));
 
             CameraTransform.X = offsetX;
             CameraTransform.Y = offsetY;
+
+            debugInfo.Append($"px: {px:F1}\npy: {py:F1}");
+        }
+
+        public void Move()
+        {
+            PlayerMovement();
+            CameraMovement();
         }
 
         private async Task GameLoop()
         {
-            while (!gameState.GameOver)
+            while (!game.GameOver)
             {
-                PlayerMovement();
-                CameraMovement();
+                Move();
+                DebugText.Text = debugInfo.ToString();
                 await Task.Delay(16);
             }
         }

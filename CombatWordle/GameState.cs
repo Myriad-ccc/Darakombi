@@ -2,26 +2,39 @@
 {
     public class GameState
     {
-        public double MapWidth { get; private set; }
-        public double MapHeight { get; private set; }
-        public bool GameOver { get; private set; } = false;
+        public Map Map { get; private set; }
+
+        public bool GameOver { get; private set; } = true;
 
         public Player Player { get; private set; }
 
-        private List<Player> players = [];
+        public double MapCenterX => Map.Width / 2 - Player.Width / 2;
+        public double MapCenterY => Map.Height / 2 - Player.Height / 2;
+        public Position MapCenter => new(MapCenterX, MapCenterY);
 
         public GameState(int mapWidth = 10000, int mapHeight = 10000)
         {
-            MapWidth = mapWidth;
-            MapHeight = mapHeight;
+            Map = new(mapWidth, mapHeight);
             AddPlayer();
-        }        
+            GameOver = false;
+        }
 
         private void AddPlayer()
         {
-            Player = new Player();
-            Player.WorldPos = new Position(MapWidth / 2 - Player.Width / 2, MapHeight / 2 - Player.Height / 2);
-            players.Add(Player);
+            Player = new(80, 80);
+            Player.WorldPos = MapCenter;
+        }
+
+        public Rock rock;
+        public void AddRock()
+        {
+            rock = new();
+            rock.WorldPos = new(Player.X, Player.Y - 30);
+        }
+
+        public void PopulateMap(Entity entity, decimal percentage)
+        {
+
         }
     }
 }
