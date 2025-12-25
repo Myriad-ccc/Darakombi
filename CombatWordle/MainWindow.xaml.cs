@@ -68,7 +68,6 @@ namespace CombatWordle
             if (e.ChangedButton == MouseButton.Right)
                 DebugText.Visibility = Visibility.Hidden;
         }
-
         private void FirstModeButton_Click(object sender, RoutedEventArgs e)
         {
             StartFirstMode();
@@ -92,9 +91,18 @@ namespace CombatWordle
             GameCanvas.Children.Add(game.Map);
             player = game.Player;
             map = game.Map;
-            GameCanvas.Children.Add(player.Visual);
+            AddToMap(player);
 
+            game.ImplementEntity += AddToMap;
+            game.PopulateMap<Rock>(2000);
             StartFirstMode();
+        }
+
+        private void AddToMap(Entity entity)
+        {
+            GameCanvas.Children.Add(entity.Visual);
+            Canvas.SetLeft(entity.Visual, entity.WorldPos.X);
+            Canvas.SetTop(entity.Visual, entity.WorldPos.Y);
         }
 
         private void PlayerMovement()
@@ -164,14 +172,6 @@ namespace CombatWordle
             //debug
             debugInfo.Clear();
             debugInfo.Append($"dx: {dx:F1}\ndy: {dy:F1}\n");
-
-            if (PressedKeys.Remove(Key.R))
-            {
-                game.AddRock();
-                GameCanvas.Children.Add(game.rock.Visual);
-                Canvas.SetLeft(game.rock.Visual, game.rock.WorldPos.X);
-                Canvas.SetTop(game.rock.Visual, game.rock.WorldPos.Y);
-            }
         }
 
         private void CameraMovement()
@@ -204,6 +204,10 @@ namespace CombatWordle
         {
             while (!game.GameOver)
             {
+                if (PressedKeys.Remove(Key.R))
+                {
+                    game.AddTestRock();
+                }
                 Move();
                 DebugText.Text = debugInfo.ToString();
                 await Task.Delay(16);

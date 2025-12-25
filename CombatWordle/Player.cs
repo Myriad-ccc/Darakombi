@@ -2,18 +2,27 @@
 {
     public class Player : Entity
     {
-        public double Speed { get; private set; }
+        public double Speed { get; private set; } = 10;
         public double DX { get; set; } = 0;
         public double DY { get; set; } = 0;
 
-        public Player(double width = 64, double height = 64, double speed = 10) : base(width, height)
+        public Player()
         {
-            Width = width;
-            Height = height;
-            Speed = speed;
+            SetVisuals();
+        }
 
-            Visual.Background = Brushes.CornflowerBlue;
-            Visual.BorderBrush = Brushes.RoyalBlue;
+        public Player(Point pos, Size size) : base(pos, size)
+        {
+            SetVisuals();
+        }
+
+        private void SetVisuals()
+        {
+            DefaultColor = Brushes.CornflowerBlue;
+            DefaultBorderColor = Brushes.RoyalBlue;
+
+            Visual.Background = DefaultColor;
+            Visual.BorderBrush = DefaultBorderColor;
         }
     }
 }

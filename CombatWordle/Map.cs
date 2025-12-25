@@ -7,6 +7,8 @@ namespace CombatWordle
         public double Area => Width * Height;
         public double Parameter => 2 * (Width + Height);
 
+        public Point Center => new(Width / 2, Height / 2);
+
         public Map()
         {
             Background = QOL.RGB(20);

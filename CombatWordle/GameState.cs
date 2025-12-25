@@ -8,12 +8,12 @@
 
         public Player Player { get; private set; }
 
-        public List<Rock> Colliders { get; set; } = [];
+        public List<Entity> Colliders { get; set; } = [];
         public List<Rock> Rocks { get; set; } = [];
 
-        public double MapCenterX => Map.Width / 2 - Player.Width / 2;
-        public double MapCenterY => Map.Height / 2 - Player.Height / 2;
-        public Point MapCenter => new(MapCenterX, MapCenterY);
+        public Action<Entity> ImplementEntity;
+
+        public Point PlayerMapCenter => new(Map.Center.X - Player.Width / 2, Map.Center.Y - Player.Height / 2);
 
         public GameState(int mapWidth = 10000, int mapHeight = 10000)
         {
@@ -23,17 +23,42 @@
 
         private void AddPlayer()
         {
-            Player = new(80, 80);
-            Player.WorldPos = MapCenter;
+            Player = new(new(), new(80, 80));
+            Player.WorldPos = PlayerMapCenter;
         }
 
         public Rock rock;
-        public void AddRock()
+        public void AddTestRock()
         {
-            rock = new();
+            rock = new(new());
             rock.WorldPos = new(Player.X, Player.Y - Player.Height - rock.Height);
-            Rocks.Add(rock);
-            Colliders.Add(rock);
+            AddEntity(rock);
+        }
+
+        private void AddEntity(Entity entity)
+        {
+            if (entity.CanCollide) Colliders.Add(entity);
+
+            if (entity is Rock rock)
+                Rocks.Add(rock);
+            ImplementEntity?.Invoke(entity);
+        }
+
+        private Point GetRandomPosition(Entity entity) =>
+            new(
+                Random.Shared.NextDouble() * (Map.Width - entity.Width),
+                Random.Shared.NextDouble() * (Map.Height - entity.Height)
+            );
+
+        public void PopulateMap<T>(int count)
+            where T : Entity, new()
+        {
+            for (int i = 0; i < count; i++)
+            {
+                var entity = new T();
+                entity.WorldPos = GetRandomPosition(entity);
+                AddEntity(entity);
+            }
         }
 
         public void PopulateMap(Entity entity, decimal percentage)

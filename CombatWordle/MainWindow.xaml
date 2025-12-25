@@ -11,9 +11,9 @@
     Background="#0F0F0F"
     FontFamily="VCR OSD Mono"
     Foreground="White"
+    Icon="/Assets/Icon.ico"
     KeyDown="Window_KeyDown"
     KeyUp="Window_KeyUp"
-    Icon="/Assets/Icon.ico"
     ResizeMode="NoResize"
     UseLayoutRounding="True"
     WindowStartupLocation="CenterScreen"
@@ -165,13 +165,14 @@
                     <TranslateTransform x:Name="CameraTransform" X="0" Y="0" />
                 </Canvas.RenderTransform>
             </Canvas>
-            <TextBlock x:Name="DebugText"
-                       FontSize="32"
-                       Foreground="White"
-                       HorizontalAlignment="Left"
-                       VerticalAlignment="Top"
-                       Text="Test"
-                       MouseUp="DebugText_MouseUp"/>
+            <TextBlock
+                x:Name="DebugText"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                FontSize="32"
+                Foreground="White"
+                MouseUp="DebugText_MouseUp"
+                Text="Test" />
         </Grid>
     </Grid>
 </Window>
