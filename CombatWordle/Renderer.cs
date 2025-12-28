@@ -1,13 +1,11 @@
-﻿using System.Windows.Media;
-using System.Windows.Media.Media3D;
-
-namespace CombatWordle
+﻿namespace CombatWordle
 {
     public class Renderer
     {
         private readonly Canvas Canvas;
 
-        private HashSet<EntityData> CurrentlyVisible = [];
+        private readonly HashSet<EntityData> CurrentlyVisible = [];
+        private readonly List<EntityData> Nulls = [];
 
         public Renderer(Canvas canvas)
         {
@@ -18,20 +16,43 @@ namespace CombatWordle
         {
             foreach (var data in visible)
             {
-                CurrentlyVisible.Add(data);
-                if (!Canvas.Children.Contains(data.Entity.Visual))
-                    Canvas.Children.Add(data.Entity.Visual);
+                Add(data);
             }
             foreach (var data in hidden)
             {
-                CurrentlyVisible.Remove(data);
-                Canvas.Children.Remove(data.Entity.Visual);
+                Drop(data);
             }
             foreach (var data in CurrentlyVisible)
             {
-                Canvas.SetLeft(data.Entity.Visual, data.X);
-                Canvas.SetTop(data.Entity.Visual, data.Y);
+                var v = data.Entity.Visual;
+                if (v != null)
+                {
+                    Canvas.SetLeft(data.Entity.Visual, data.X);
+                    Canvas.SetTop(data.Entity.Visual, data.Y);
             }
+                else
+            {
+                Nulls.Add(data);
+            }
+        }
+            foreach (var data in Nulls)
+                Drop(data);
+        }
+
+        public void Add(EntityData data)
+        {
+            var v = data.Entity.Visual;
+            if (v != null)
+                if (CurrentlyVisible.Add(data))
+                    Canvas.Children.Add(data.Entity.Visual);
+        }
+
+        public void Drop(EntityData data)
+        {
+            var v = data.Entity.Visual;
+            if (v != null)
+                if (CurrentlyVisible.Remove(data))
+                    Canvas.Children.Remove(v);
         }
     }
 }

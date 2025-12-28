@@ -10,7 +10,7 @@
         public bool CanCollide { get; set; } = false;
         public CollisionType CollisionType { get; protected set; }
 
-        public Border Visual = new();
+        public Border Visual;
         public Brush DefaultColor { get; protected set; } = Brushes.Gray;
         public Brush DefaultBorderColor { get; protected set; } = Brushes.DarkGray;
 
@@ -21,12 +21,6 @@
 
         public double Area => Width * Height;
         public double Parameter => 2 * (Width + Height);
-
-        public double Thickness => Math.Max(
-            Math.Max(Visual.BorderThickness.Top, Visual.BorderThickness.Left),
-            Math.Max(Visual.BorderThickness.Bottom, Visual.BorderThickness.Right));
-        public double ActualWidth => Width - 2 * Thickness;
-        public double ActualHeight => Height - 2 * Thickness;
 
         public Rect Rect => new(WorldPos, Size);
 
@@ -39,22 +33,19 @@
 
         public Entity(Size size)
         {
-            UpdateDimensions(size);
+            SetSize(size);
         }
 
         public Entity(Point pos, Size size)
         {
             WorldPos = pos;
-            UpdateDimensions(size);
+            SetSize(size);
         }
 
-        public void UpdateDimensions(Size size)
+        public void SetSize(Size size)
         {
             Width = size.Width;
             Height = size.Height;
-            Visual.Width = size.Width;
-            Visual.Height = size.Height;
-            Visual.BorderThickness = new Thickness(Area / (5 * Parameter));
         }
     }
 }

@@ -163,6 +163,13 @@
                 Foreground="White"
                 MouseUp="DebugText_MouseUp"
                 Text="DebugInfo" />
+            <TextBlock
+                x:Name="EntityCounter"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                FontSize="32"
+                Foreground="White"
+                Text="EntityCounter" />
         </Grid>
     </Grid>
 </Window>

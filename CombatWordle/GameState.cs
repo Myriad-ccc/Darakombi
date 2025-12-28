@@ -9,10 +9,9 @@
         public Player Player { get; private set; }
 
         public List<Entity> Entities { get; } = [];
-        public Dictionary<Entity, EntityData> EntityToData { get; } = [];
         public List<EntityData> AllEntityData { get; } = [];
 
-        public List<Entity> Colliders { get; set; } = [];
+        public HashSet<Entity> Colliders { get; set; } = [];
 
         public List<Player> Players { get; set; } = [];
         public List<Rock> Rocks { get; set; } = [];
@@ -21,7 +20,7 @@
 
         public Point PlayerMapCenter => new(Map.Center.X - Player.Width / 2, Map.Center.Y - Player.Height / 2);
 
-        public GameState(int mapWidth = 10000, int mapHeight = 10000)
+        public GameState(int mapWidth = 12800, int mapHeight = 12800)
         {
             Map = new(mapWidth, mapHeight);
             AddPlayer();
@@ -112,7 +111,6 @@
 
             AddToEntities(entity);
             ImplementEntity?.Invoke(entity);
-
             return true;
         }
 
@@ -120,8 +118,11 @@
         {
             Entities.Add(entity);
 
-            EntityData data = new(entity) { Visible = false };
-            EntityToData[entity] = data;
+            EntityData data = new(entity) 
+            {
+                Visible = false,
+                CurrentLoadStage = LoadStage.Registered
+            };
             AllEntityData.Add(data);
 
             if (entity.CanCollide) Colliders.Add(entity);

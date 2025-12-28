@@ -2,17 +2,34 @@
 {
     public class Rock : Entity
     {
-        private static readonly Random random = new();
+        private Dictionary<string, double[]> RockTypes = new()
+        {
+            //["Clay"] = [1, 4, 1, 4],
+            //["Silt"] = [8, 16, 8, 16],
+            //["Sand"] = [20, 32, 20, 32],
+            //["Granule"] = [40, 64, 40, 64],
+            //["Pebble"] = [80, 128, 80, 128],
+            //["Cobble"] = [160, 256, 160, 256],
+            //["Boulder"] = [320, 512, 320, 512],
+            ["Cliff"] = [640, 1024, 640, 1024]
+        };
+        public string RockType { get; private set; }
+
+        private string GetRandomRockType() => RockTypes.Keys.ElementAt(Random.Shared.Next(RockTypes.Count));
 
         public Rock()
         {
-            UpdateDimensions(GetRandomSize());
+            RockType = GetRandomRockType();
+            var size = RockTypes[RockType];
+            SetSize(QOL.GetRandomSize(size));
             SetAttributes();
         }
 
         public Rock(Point pos) : base(pos)
         {
-            UpdateDimensions(GetRandomSize());
+            RockType = GetRandomRockType();
+            var size = RockTypes[RockType];
+            SetSize(QOL.GetRandomSize(size));
             SetAttributes();
         }
 
@@ -28,20 +45,6 @@
 
             DefaultColor = Brushes.Gray;
             DefaultBorderColor = Brushes.LightGray;
-
-            Visual.Background = DefaultColor;
-            Visual.BorderBrush = DefaultBorderColor;
-        }
-
-        private static Size GetRandomSize()
-        {
-            int w = 0, h = 0;
-            while (w * h < 1000)
-            {
-                w = random.Next(20, 200);
-                h = random.Next(5, 120);
-            }
-            return new(w, h);
         }
     }
 }

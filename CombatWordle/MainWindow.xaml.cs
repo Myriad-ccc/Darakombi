@@ -1,4 +1,6 @@
-﻿global using System.Diagnostics;
+﻿global using System;
+global using System.Collections.Generic;
+global using System.Diagnostics;
 global using System.Text;
 global using System.Windows;
 global using System.Windows.Controls;
@@ -12,13 +14,15 @@ namespace CombatWordle
         private readonly Stopwatch Uptime = Stopwatch.StartNew();
         private double lastTime;
 
+        private Rect Viewport => new(-CameraTransform.X, -CameraTransform.Y, ActualWidth, ActualHeight);
+
         private bool WindowDragging = false;
         private Point DragOffset;
         private readonly HashSet<Key> PressedKeys = [];
 
         private GameState game;
-        private Culler culler;
-        private Renderer renderer;
+        private SpatialGrid spatialGrid;
+        private SceneManager sceneManager;
 
         private List<EntityData> visible = [];
         private List<EntityData> hidden = [];
@@ -27,6 +31,7 @@ namespace CombatWordle
         private Player player => game.Player;
 
         private StringBuilder debugInfo = new();
+        private StringBuilder entityCounter = new();
 
         private void Form_MouseDown(object sender, MouseButtonEventArgs e)
         {
@@ -87,8 +92,8 @@ namespace CombatWordle
             TitleTextShadow.Foreground = QOL.RandomColor();
 
             game = new GameState();
-            culler = new(game.AllEntityData);
-            renderer = new(GameCanvas);
+            spatialGrid = new(map.Width, map.Height);
+            sceneManager = new(GameCanvas, visible, hidden);
 
             GameCanvas.Children.Add(map);
             Canvas.SetLeft(map, 0);
@@ -130,8 +135,7 @@ namespace CombatWordle
             pos.X += dx;
             newRect = new Rect(pos, size);
             foreach (Entity collider in game.Colliders
-                .Where(c => c.CollisionType != CollisionType.Live
-                && Math.Abs(c.WorldPos.X - pos.X) < player.Area / 15))
+                .Where(c => c.CollisionType != CollisionType.Live))
             {
                 if (newRect.IntersectsWith(collider.Rect))
                 {
@@ -146,8 +150,7 @@ namespace CombatWordle
             pos.Y += dy;
             newRect = new Rect(pos, size);
             foreach (Entity collider in game.Colliders
-                .Where(c => c.CollisionType != CollisionType.Live
-                && Math.Abs(c.WorldPos.Y - pos.Y) < player.Area / 15))
+                .Where(c => c.CollisionType != CollisionType.Live))
             {
                 var colliderRect = new Rect(collider.WorldPos, collider.Size);
                 if (newRect.IntersectsWith(colliderRect))
@@ -163,12 +166,16 @@ namespace CombatWordle
             pos.X = Math.Max(leftEdge, Math.Min(pos.X, rightEdge));
             pos.Y = Math.Max(topEdge, Math.Min(pos.Y, bottomEdge));
 
+            Debug.Assert(
+                !double.IsNaN(pos.X)
+                && !double.IsNaN(pos.Y));
+
             player.WorldPos = pos;
 
-            //debug
-            debugInfo.Clear();
-            debugInfo.Append($"dx: {dx:F1}\ndy: {dy:F1}\n");
+            debugInfo.AppendLine($"dx:{dx:F1}\ndy:{dy:F1}");
+            debugInfo.AppendLine($"vx:{dx * 1 / dt:F1}\nvy:{dy * 1 / dt:F1}");
         }
+
         private void CameraMovement()
         {
             double px = player.WorldPos.X + player.Width / 2;
@@ -186,13 +193,15 @@ namespace CombatWordle
             CameraTransform.X = offsetX;
             CameraTransform.Y = offsetY;
 
-            debugInfo.Append($"px: {px:F1}\npy: {py:F1}\n");
+            debugInfo.AppendLine($"px:{px:F1}\npy:{py:F1}");
         }
+
         public void Move(double dt)
         {
             PlayerMovement(dt);
             CameraMovement();
         }
+
         private void HandleHotKeys()
         {
             if (PressedKeys.Remove(Key.R))
@@ -200,35 +209,41 @@ namespace CombatWordle
             if (PressedKeys.Remove(Key.G))
                 game.PopulateMap<Rock>(2000);
         }
-        private void OnRender(object sender, EventArgs e)
-        {
-            double now = Uptime.Elapsed.TotalSeconds;
-            double dt = Math.Min(now - lastTime, 0.05);
-            lastTime = now;
 
-            Update(dt);
+        private void DebugGo(double dt)
+        {
+            debugInfo.AppendLine($"fps:{QOL.GetAverageFPS(dt):F0}");
+            debugInfo.AppendLine($"dt:{dt:F3}");
+            entityCounter.AppendLine("Entities:");
+            entityCounter.AppendLine($"players:{game.Players.Count}");
+            entityCounter.AppendLine($"rocks:{game.Rocks.Count}");
+            DebugText.Text = debugInfo.ToString();
+            EntityCounter.Text = entityCounter.ToString();
         }
 
         private void Update(double dt)
         {
+            debugInfo.Clear();
+            entityCounter.Clear();
             HandleHotKeys();
             Move(dt);
+            foreach (var entityData in game.AllEntityData)
+                spatialGrid.Update(entityData);
+            sceneManager.Update(Viewport, game.AllEntityData); //REMOVE COLLIDERS
+            DebugGo(dt);
+        }
 
-            Rect viewport = new(
-                -CameraTransform.X,
-                -CameraTransform.Y,
-                ActualWidth,
-                ActualHeight
-                );
+        private double CurrentFrame()
+        {
+            double now = Uptime.Elapsed.TotalSeconds;
+            double dt = Math.Min(now - lastTime, 0.05);
+            lastTime = now;
+            return dt;
+        }
 
-            visible.Clear();
-            hidden.Clear();
-
-            culler.Cull(viewport, visible, hidden);
-            renderer.RenderEntities(visible, hidden);
-
-            debugInfo.Append($"dt: {dt:F3}\n");
-            DebugText.Text = debugInfo.ToString();
+        private void OnRender(object sender, EventArgs e)
+        {
+            Update(CurrentFrame());
         }
 
         private async void StartGame()

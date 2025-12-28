@@ -23,9 +23,6 @@
 
             DefaultColor = Brushes.CornflowerBlue;
             DefaultBorderColor = Brushes.RoyalBlue;
-
-            Visual.Background = DefaultColor;
-            Visual.BorderBrush = DefaultBorderColor;
         }
     }
 }
