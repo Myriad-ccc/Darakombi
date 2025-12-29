@@ -20,9 +20,8 @@
         }
 
         public void Update(Rect viewport, List<EntityData> entities)
-        { // REMOVE COLLIDERS FROM SCENE UPDATER
+        {
             Stager.Viewport = viewport;
-
             foreach (var data in entities)
             {
                 Stager.UpdateLoadStage(data);
@@ -31,12 +30,8 @@
                 switch (data.CurrentLoadStage)
                 {
                     case LoadStage.Unregistered:
-                        //e.CanCollide = false;
-                        //Colliders.Remove(data);
                         break;
                     case LoadStage.Registered:
-                        //e.CanCollide = true;
-                        //Colliders.Add(data);
                         if (e.Visual != null)
                         {
                             Renderer.Drop(data);

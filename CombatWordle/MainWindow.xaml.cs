@@ -6,6 +6,7 @@ global using System.Windows;
 global using System.Windows.Controls;
 global using System.Windows.Input;
 global using System.Windows.Media;
+using System.Windows.Shapes;
 
 namespace CombatWordle
 {
@@ -99,7 +100,53 @@ namespace CombatWordle
             Canvas.SetLeft(map, 0);
             Canvas.SetTop(map, 0);
 
+            DrawSpatialGrid();
+
             StartGame();
+        }
+
+        private void DrawSpatialGrid()
+        {
+            var grid = new Grid()
+            {
+                IsHitTestVisible = false,
+                Opacity = 0.6
+            };
+            GameCanvas.Children.Add(grid);
+
+            int cellSize = 128;
+            double width = map.Width;
+            double height = map.Height;
+
+            var brush = Brushes.Green;
+
+            for (int x = 0; x <= width; x += cellSize)
+            {
+                var line = new Line()
+                {
+                    X1 = x,
+                    X2 = x,
+                    Y1 = 0,
+                    Y2 = height,
+                    Stroke = brush,
+                    StrokeThickness = 1
+                };
+                grid.Children.Add(line);
+            }
+
+            for (int y = 0; y <= height; y += cellSize)
+            {
+                var line = new Line()
+                {
+                    X1 = 0,
+                    X2 = width,
+                    Y1 = y,
+                    Y2 = y,
+                    Stroke = brush,
+                    StrokeThickness = 1
+                };
+                grid.Children.Add(line);
+            }
         }
 
         private void PlayerMovement(double dt)
@@ -127,38 +174,40 @@ namespace CombatWordle
             Size size = player.Size;
             Rect newRect;
 
+            double gap = 1e-10;
             double leftEdge = map.Thickness;
             double topEdge = map.Thickness;
             double rightEdge = map.Width - map.Thickness - player.Width;
             double bottomEdge = map.Height - map.Thickness - player.Height;
 
+            Rect searchArea = player.Rect;
+            searchArea.Inflate(player.Speed * dt + 10, player.Speed * dt + 10);
+            var colliders = spatialGrid.Search(searchArea);
+
             pos.X += dx;
             newRect = new Rect(pos, size);
-            foreach (Entity collider in game.Colliders
-                .Where(c => c.CollisionType != CollisionType.Live))
+            foreach (var collider in colliders.Where(c => c.Entity.CollisionType != CollisionType.Live))
             {
                 if (newRect.IntersectsWith(collider.Rect))
                 {
                     if (dx > 0)
-                        pos.X = collider.WorldPos.X - player.Width - 0.1;
+                        pos.X = collider.Pos.X - player.Width - gap;
                     else if (dx < 0)
-                        pos.X = collider.WorldPos.X + collider.Width + 0.1;
+                        pos.X = collider.Pos.X + collider.Width + gap;
                     newRect = new Rect(pos, size);
                 }
             }
 
             pos.Y += dy;
             newRect = new Rect(pos, size);
-            foreach (Entity collider in game.Colliders
-                .Where(c => c.CollisionType != CollisionType.Live))
+            foreach (var collider in colliders.Where(c => c.Entity.CollisionType != CollisionType.Live))
             {
-                var colliderRect = new Rect(collider.WorldPos, collider.Size);
-                if (newRect.IntersectsWith(colliderRect))
+                if (newRect.IntersectsWith(collider.Rect))
                 {
                     if (dy > 0)
-                        pos.Y = collider.WorldPos.Y - player.Height - 0.1;
+                        pos.Y = collider.Pos.Y - player.Height - gap;
                     else if (dy < 0)
-                        pos.Y = collider.WorldPos.Y + collider.Height + 0.1;
+                        pos.Y = collider.Pos.Y + collider.Height + gap;
                     newRect = new Rect(pos, size);
                 }
             }
@@ -229,7 +278,7 @@ namespace CombatWordle
             Move(dt);
             foreach (var entityData in game.AllEntityData)
                 spatialGrid.Update(entityData);
-            sceneManager.Update(Viewport, game.AllEntityData); //REMOVE COLLIDERS
+            sceneManager.Update(Viewport, game.AllEntityData);
             DebugGo(dt);
         }
 

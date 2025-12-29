@@ -1,55 +1,30 @@
 ﻿namespace CombatWordle
 {
-    //public class EntityData
-    //{
-    //    public Entity Entity { get; init; }
-    //    public bool Visible;    
-
-    //    public LoadStage CurrentLoadStage;
-    //    public LoadStage TargetLoadStage;
-
-    //    public Rect Rect => Entity.Rect;
-    //    public double X => Rect.X;
-    //    public double Y => Rect.Y;
-
-    //    public double GridX { get; set; } = -1;
-    //    public double GridY { get; set; } = -1;
-
-    //    public EntityData(Entity entity)
-    //    {
-    //        Entity = entity;
-    //    }
-    //}
-
-    //public readonly record struct EntityData(
-    //    int ID,
-    //    Rect Rect,
-    //    bool Visible,
-    //    LoadStage CurrentLoadStage, //!!!
-    //    LoadStage TargetLoadStage,
-    //    int Gx,
-    //    int Gy
-    //    );
-
     public class EntityData
     {
         public Entity Entity;
         public bool Visible;
 
+        public Rect LastRect;
+
         public LoadStage CurrentLoadStage;
         public LoadStage TargetLoadStage;
 
-        public int GX;
-        public int GY;
+        public int GX { get; set; } = -1;
+        public int GY { get; set; } = -1;
 
         public Rect Rect => Entity.Rect;
         public Point Pos => Entity.WorldPos;
         public double X => Rect.X;
         public double Y => Rect.Y;
+        public Size Size => Rect.Size;
+        public double Width => Size.Width;
+        public double Height => Size.Height;
 
         public EntityData(Entity entity)
         {
             Entity = entity;
+            LastRect = entity.Rect;
         }
     }
 

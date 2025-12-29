@@ -16,8 +16,6 @@
         public List<Player> Players { get; set; } = [];
         public List<Rock> Rocks { get; set; } = [];
 
-        public Action<Entity> ImplementEntity;
-
         public Point PlayerMapCenter => new(Map.Center.X - Player.Width / 2, Map.Center.Y - Player.Height / 2);
 
         public GameState(int mapWidth = 12800, int mapHeight = 12800)
@@ -110,7 +108,6 @@
             ClampInsideMap(entity);
 
             AddToEntities(entity);
-            ImplementEntity?.Invoke(entity);
             return true;
         }
 
