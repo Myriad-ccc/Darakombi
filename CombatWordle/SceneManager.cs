@@ -8,19 +8,19 @@
         private readonly HashSet<EntityData> Visible = [];
         private readonly List<EntityData> ToRemove = [];
 
+        private readonly Stack<Border> Visuals = [];
+
         public SceneManager(Canvas canvas)
         {
             Canvas = canvas;
         }
 
-        public void Update(Rect viewport, List<EntityData> allEntities, IEnumerable<EntityData> viewPortEntities = null)
+        public void Update(IEnumerable<EntityData> viewportEntities)
         {
             Visible.Clear();
             ToRemove.Clear();
 
-            var viewportEntities = viewPortEntities ?? EntitiesInArea(viewport, allEntities);
-
-            foreach (var data in EntitiesInArea(viewport, allEntities))
+            foreach (var data in viewportEntities)
             {
                 Visible.Add(data);
                 if (Rendered.Add(data))
@@ -41,16 +41,19 @@
         public void Add(EntityData data)
         {
             var e = data.Entity;
-            e.Visual ??= new()
+            if (e.Visual == null)
             {
-                Width = e.Width,
-                Height = e.Height,
-                BorderThickness = new(e.Area / (5 * e.Parameter)),
-                Background = e.Color,
-                BorderBrush = e.BorderColor
-            };
-            Canvas.Children.Add(e.Visual);
-            data.Visible = true;
+                e.Visual = Visuals.Count > 0 ? Visuals.Pop() : new();
+                e.Visual.Width = e.Width;
+                e.Visual.Height = e.Height;
+                e.Visual.BorderThickness = new(e.Area / (5 * e.Parameter));
+                e.Visual.Background = e.Color;
+                e.Visual.BorderBrush = e.BorderColor;
+                data.Visible = true;
+            }
+
+            if (e.Visual.Parent == null)
+                Canvas.Children.Add(e.Visual);
         }
 
         public void Remove(EntityData data)
@@ -59,6 +62,8 @@
             if (e.Visual != null)
             {
                 Canvas.Children.Remove(e.Visual);
+                Visuals.Push(e.Visual);
+                e.Visual = null;
                 data.Visible = false;
             }
         }

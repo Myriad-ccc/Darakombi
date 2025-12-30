@@ -105,10 +105,13 @@
             entity.LastRect = current;
         }
 
+        private readonly List<EntityData> found = [];
+        private readonly HashSet<EntityData> seen = [];
+
         public List<EntityData> Search(Rect area) // to be improved
         {
-            var found = new List<EntityData>();
-            var seen = new HashSet<EntityData>();
+            found.Clear();
+            seen.Clear();
 
             foreach (var cell in OccupiedCells(area))
             {

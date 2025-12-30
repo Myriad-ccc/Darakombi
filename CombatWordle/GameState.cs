@@ -8,7 +8,9 @@
         public List<Entity> Entities { get; } = [];
         public List<EntityData> AllEntityData { get; } = [];
 
-        public List<Player> Players { get; set; } = [];
+        public List<EntityData> LiveEntities { get; } = [];
+
+        public List<Player> Players { get; } = [];
         public List<Rock> Rocks { get; set; } = [];
 
         public Point MapCenter => new(Map.Center.X, Map.Center.Y);
@@ -23,13 +25,19 @@
         private void AddPlayer()
         {
             var playerMapCenter = new Point(Map.Center.X - 40 / 2, Map.Center.Y - 40 / 2);
-            var player = EntityHelper.Create<Player>(playerMapCenter, new(80, 80));
+            var player = new Player
+            {
+                Pos = playerMapCenter,
+                Width = 80,
+                Height = 80
+            };
             AddEntity(player);
         }
 
         public void AddTestRock()
         {
-            var rock = EntityHelper.Create<Rock>(x => new Point(Players[0].X, Players[0].Y - Players[0].Height - x.Height));
+            var rock = new Rock();
+            rock.Pos = new Point(Players[0].X, Players[0].Y - Players[0].Height - rock.Height);
             AddEntity(rock, force: false);
         }
 
@@ -119,6 +127,7 @@
 
             EntityData data = new(entity);
             AllEntityData.Add(data);
+            if (entity.CollisionType == CollisionType.Live) LiveEntities.Add(data);
             spatialGrid.Add(data);
 
             if (entity is Player player) Players.Add(player);
@@ -136,7 +145,7 @@
             where T : Entity, new()
         {
             for (int i = 0; i < count; i++)
-                AddEntity(EntityHelper.Create<T>(),
+                AddEntity(new T(),
                     force: false, random: true);
         }
 

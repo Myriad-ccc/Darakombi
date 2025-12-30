@@ -287,9 +287,9 @@ namespace CombatWordle
             entityCounter.Clear();
             HandleHotKeys();
             Move(dt);
-            foreach (var entityData in game.AllEntityData.Where(e => e.Entity.CollisionType != CollisionType.Enviornment))
+            foreach (var entityData in game.LiveEntities)
                 grid.Update(entityData);
-            sceneManager.Update(ViewportPlus, game.AllEntityData, game.spatialGrid.Search(ViewportPlus));
+            sceneManager.Update(game.spatialGrid.Search(ViewportPlus));
             DebugGo(dt);
         }
 

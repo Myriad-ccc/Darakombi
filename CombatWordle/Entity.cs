@@ -5,78 +5,74 @@
         public static Type[] EntityTypes = QOL.GetDerivedTypes<Entity>();
         public static Type GetRandomEntityType() => EntityTypes[Random.Shared.Next(EntityTypes.Length)];
 
-        public static T Create<T>() where T : Entity, new()
-        {
-            var e = new T();
-            return e;
-        }
-        public static T Create<T>(Point pos) where T : Entity, new()
-        {
-            var e = new T
-            {
-                Pos = pos
-            };
-            return e;
-        }
-        public static T Create<T>(Size size) where T : Entity, new()
-        {
-            var e = new T
-            {
-                Width = size.Width,
-                Height = size.Height
-            };
-            return e;
-        }
-        public static T Create<T>(Point pos, Size size) where T : Entity, new()
-        {
-            var e = new T
-            {
-                Pos = pos,
-                Width = size.Width,
-                Height = size.Height
-            };
-            return e;
-        }
+        public static T Create<T>(Func<T> func) where T : Entity => func();
+        //public static T Create<T>(Point pos) where T : Entity, new()
+        //{
+        //    var e = new T
+        //    {
+        //        Pos = pos
+        //    };
+        //    return e;
+        //}
+        //public static T Create<T>(Size size) where T : Entity, new()
+        //{
+        //    var e = new T
+        //    {
+        //        Width = size.Width,
+        //        Height = size.Height
+        //    };
+        //    return e;
+        //}
+        //public static T Create<T>(Point pos, Size size) where T : Entity, new()
+        //{
+        //    var e = new T
+        //    {
+        //        Pos = pos,
+        //        Width = size.Width,
+        //        Height = size.Height
+        //    };
+        //    return e;
+        //}
 
-        public static T Create<T>(Func<T, Point> positionLogic) where T : Entity, new()
-        {
-            var e = new T();
-            e.Pos = positionLogic(e);
-            return e;
-        }
-        public static T Create<T>(Func<T, Size> sizeLogic) where T : Entity, new()
-        {
-            var e = new T();
-            var size = sizeLogic(e);
-            e.Width = size.Width;
-            e.Height = size.Height;
-            return e;
-        }
-        public static T Create<T>(Func<T, Point> positionLogic, Func<T, Size> sizeLogic) where T : Entity, new()
-        {
-            var e = new T();
-            e.Pos = positionLogic(e);
-            var size = sizeLogic(e);
-            e.Width = size.Width;
-            e.Height = size.Height;
-            return e;
-        }
-        public static T Create<T>(Func<T, Size> sizeLogic, Func<T, Point> positionLogic) where T : Entity, new()
-        {
-            var e = new T();
-            var size = sizeLogic(e);
-            e.Width = size.Width;
-            e.Height = size.Height;
-            e.Pos = positionLogic(e);
-            return e;
-        }
+        //public static T Create<T>(Func<T, Point> positionLogic) where T : Entity, new()
+        //{
+        //    var e = new T();
+        //    e.Pos = positionLogic(e);
+        //    return e;
+        //}
+        //public static T Create<T>(Func<T, Size> sizeLogic) where T : Entity, new()
+        //{
+        //    var e = new T();
+        //    var size = sizeLogic(e);
+        //    e.Width = size.Width;
+        //    e.Height = size.Height;
+        //    return e;
+        //}
+        //public static T Create<T>(Func<T, Point> positionLogic, Func<T, Size> sizeLogic) where T : Entity, new()
+        //{
+        //    var e = new T();
+        //    e.Pos = positionLogic(e);
+        //    var size = sizeLogic(e);
+        //    e.Width = size.Width;
+        //    e.Height = size.Height;
+        //    return e;
+        //}
+        //public static T Create<T>(Func<T, Size> sizeLogic, Func<T, Point> positionLogic) where T : Entity, new()
+        //{
+        //    var e = new T();
+        //    var size = sizeLogic(e);
+        //    e.Width = size.Width;
+        //    e.Height = size.Height;
+        //    e.Pos = positionLogic(e);
+        //    return e;
+        //}
 
-        public static Entity CreateRandom()
-        {
-            var type = GetRandomEntityType();
-            var e = (Entity)Activator.CreateInstance(type)!;
-            return e;
-        }
+        //public static Entity CreateRandom()
+        //{
+        //    var type = GetRandomEntityType();
+        //    var e = (Entity)Activator.CreateInstance(type)!;
+        //    return e;
+        //}
     }
 
     public abstract class Entity : IEntityAttributes, IInitialize
