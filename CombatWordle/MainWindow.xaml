@@ -14,10 +14,7 @@
     Icon="/Assets/Icon.ico"
     KeyDown="Window_KeyDown"
     KeyUp="Window_KeyUp"
-    MouseDown="Window_MouseDown"
-    MouseMove="Window_MouseMove"
-    MouseUp="Window_MouseUp"
-    MouseWheel="Window_MouseWheel"
+    MouseWheel="GameCanvas_MouseWheel"
     ResizeMode="NoResize"
     SnapsToDevicePixels="True"
     UseLayoutRounding="True"
@@ -48,8 +45,6 @@
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top"
                 FontSize="40"
-                MouseMove="Window_MouseMove"
-                MouseUp="Window_MouseUp"
                 Text="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}" />
 
             <StackPanel
@@ -113,6 +108,7 @@
                 </Button>
             </StackPanel>
         </Grid>
+
         <Border
             Grid.Row="1"
             BorderBrush="#282828"
@@ -162,8 +158,14 @@
                 </StackPanel>
             </Grid>
         </Border>
+
         <Grid Grid.Row="1" ClipToBounds="True">
-            <Canvas x:Name="GameCanvas" Visibility="Hidden">
+            <Canvas
+                x:Name="GameCanvas"
+                MouseDown="GameCanvas_MouseDown"
+                MouseMove="GameCanvas_MouseMove"
+                MouseUp="GameCanvas_MouseUp"
+                Visibility="Hidden">
                 <Canvas.RenderTransform>
                     <TransformGroup>
                         <TranslateTransform x:Name="CameraTransform" X="0" Y="0" />
@@ -171,63 +173,152 @@
                     </TransformGroup>
                 </Canvas.RenderTransform>
             </Canvas>
-            <TextBlock
-                x:Name="DebugText"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Top"
-                FontSize="32"
-                Foreground="White"
-                Visibility="Hidden" />
-            <TextBlock
-                x:Name="EntityCounter"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Top"
-                FontSize="32"
-                Foreground="White"
-                Visibility="Hidden" />
 
-            <Grid
-                x:Name="GameOverlay"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Bottom"
-                Visibility="Hidden">
-                <Grid.RowDefinitions>
-                    <RowDefinition />
-                    <RowDefinition />
-                    <RowDefinition />
-                </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
+            <Grid x:Name="GeneralUI">
+                <TextBlock
+                    x:Name="DebugText"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    FontSize="32"
+                    Foreground="White"
+                    Visibility="Hidden" />
+                <TextBlock
+                    x:Name="EntityCounter"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    FontSize="32"
+                    Foreground="White"
+                    Visibility="Hidden" />
+
+                <Grid
+                    x:Name="GameOverlay"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Bottom"
+                    Visibility="Hidden">
+                    <Grid.RowDefinitions>
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Button
+                        x:Name="GhostTitle"
+                        Grid.Row="0"
+                        Grid.Column="0"
+                        HorizontalAlignment="Left"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Click="GhostTitle_Click"
+                        Content="Ghost:"
+                        FontSize="36"
+                        Foreground="White">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                    <Button
+                        x:Name="GhostBool"
+                        Grid.Row="0"
+                        Grid.Column="1"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Click="GhostTitle_Click"
+                        Content="OFF"
+                        FontSize="36"
+                        Foreground="IndianRed">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+
+                    <Button
+                        x:Name="OverlayTitle"
+                        Grid.Row="1"
+                        Grid.Column="0"
+                        HorizontalAlignment="Left"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Click="OverlayTitle_Click"
+                        Content="Areas:"
+                        FontSize="36"
+                        Foreground="White">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                    <Button
+                        x:Name="OverlayBool"
+                        Grid.Row="1"
+                        Grid.Column="1"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Click="OverlayTitle_Click"
+                        Content="ON"
+                        FontSize="36"
+                        Foreground="LightGreen">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+
+                    <Button
+                        x:Name="GridTitle"
+                        Grid.Row="2"
+                        Grid.Column="0"
+                        HorizontalAlignment="Left"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Click="GridTitle_Click"
+                        Content="Grid:"
+                        FontSize="36"
+                        Foreground="White">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                    <Button
+                        x:Name="GridBool"
+                        Grid.Row="2"
+                        Grid.Column="1"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Click="GridTitle_Click"
+                        Content="ON"
+                        FontSize="36"
+                        Foreground="LightGreen">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                </Grid>
 
                 <Button
-                    x:Name="GhostTitle"
-                    Grid.Row="0"
-                    Grid.Column="0"
-                    HorizontalAlignment="Left"
+                    x:Name="EditorSave"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
                     Background="Transparent"
                     BorderThickness="0"
-                    Click="GhostTitle_Click"
-                    Content="Ghost:"
-                    FontSize="36"
-                    Foreground="White">
-                    <Button.Template>
-                        <ControlTemplate TargetType="Button">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </ControlTemplate>
-                    </Button.Template>
-                </Button>
-                <Button
-                    x:Name="GhostBool"
-                    Grid.Row="0"
-                    Grid.Column="1"
-                    Background="Transparent"
-                    BorderThickness="0"
-                    Click="GhostTitle_Click"
-                    Content="OFF"
-                    FontSize="36"
-                    Foreground="IndianRed">
+                    Click="EditorSave_Click"
+                    Content="Save"
+                    FontSize="50"
+                    Foreground="White"
+                    Visibility="Hidden">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
@@ -235,137 +326,125 @@
                     </Button.Template>
                 </Button>
 
-                <Button
-                    x:Name="OverlayTitle"
-                    Grid.Row="1"
-                    Grid.Column="0"
+                <StackPanel
+                    x:Name="EditorOverlay"
                     HorizontalAlignment="Left"
-                    Background="Transparent"
-                    BorderThickness="0"
-                    Click="OverlayTitle_Click"
-                    Content="Areas:"
-                    FontSize="36"
-                    Foreground="White">
-                    <Button.Template>
-                        <ControlTemplate TargetType="Button">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </ControlTemplate>
-                    </Button.Template>
-                </Button>
-                <Button
-                    x:Name="OverlayBool"
-                    Grid.Row="1"
-                    Grid.Column="1"
-                    Background="Transparent"
-                    BorderThickness="0"
-                    Click="OverlayTitle_Click"
-                    Content="ON"
-                    FontSize="36"
-                    Foreground="LightGreen">
-                    <Button.Template>
-                        <ControlTemplate TargetType="Button">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </ControlTemplate>
-                    </Button.Template>
-                </Button>
+                    VerticalAlignment="Bottom"
+                    Orientation="Vertical"
+                    Visibility="Hidden">
 
-                <Button
-                    x:Name="GridTitle"
-                    Grid.Row="2"
-                    Grid.Column="0"
-                    HorizontalAlignment="Left"
-                    Background="Transparent"
-                    BorderThickness="0"
-                    Click="GridTitle_Click"
-                    Content="Grid:"
-                    FontSize="36"
-                    Foreground="White">
-                    <Button.Template>
-                        <ControlTemplate TargetType="Button">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </ControlTemplate>
-                    </Button.Template>
-                </Button>
-                <Button
-                    x:Name="GridBool"
-                    Grid.Row="2"
-                    Grid.Column="1"
-                    Background="Transparent"
-                    BorderThickness="0"
-                    Click="GridTitle_Click"
-                    Content="ON"
-                    FontSize="36"
-                    Foreground="LightGreen">
-                    <Button.Template>
-                        <ControlTemplate TargetType="Button">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </ControlTemplate>
-                    </Button.Template>
-                </Button>
-            </Grid>
-            <Button
-                x:Name="EditorSave"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Top"
-                Background="Transparent"
-                BorderThickness="0"
-                Click="EditorSave_Click"
-                Content="Save"
-                FontSize="50"
-                Foreground="White"
-                Visibility="Hidden">
-                <Button.Template>
-                    <ControlTemplate TargetType="Button">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    </ControlTemplate>
-                </Button.Template>
-            </Button>
-            <Grid
-                x:Name="EditorOverlay"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Bottom"
-                Visibility="Hidden">
-                <Grid.RowDefinitions>
-                    <RowDefinition />
-                    <RowDefinition />
-                </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <Button
-                    x:Name="EditorGridTitle"
-                    Grid.Row="0"
-                    Grid.Column="0"
-                    HorizontalAlignment="Left"
-                    Background="Transparent"
-                    BorderThickness="0"
-                    Click="EditorGridTitle_Click"
-                    Content="Grid:"
-                    FontSize="36"
-                    Foreground="White">
-                    <Button.Template>
-                        <ControlTemplate TargetType="Button">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </ControlTemplate>
-                    </Button.Template>
-                </Button>
-                <Button
-                    x:Name="EditorGridBool"
-                    Grid.Row="0"
-                    Grid.Column="1"
-                    Background="Transparent"
-                    BorderThickness="0"
-                    Click="EditorGridTitle_Click"
-                    Content="ON"
-                    FontSize="36"
-                    Foreground="LightGreen">
-                    <Button.Template>
-                        <ControlTemplate TargetType="Button">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </ControlTemplate>
-                    </Button.Template>
-                </Button>
+                    <StackPanel HorizontalAlignment="Left" VerticalAlignment="Bottom">
+                        <StackPanel>
+                            <TextBlock
+                                FontSize="32"
+                                Foreground="IndianRed"
+                                Text="Red" />
+
+                            <StackPanel Orientation="Horizontal">
+                                <Slider
+                                    x:Name="RedSlider"
+                                    Width="100"
+                                    Height="20"
+                                    Maximum="255"
+                                    Minimum="0"
+                                    SmallChange="1"
+                                    ValueChanged="RedSlider_ValueChanged"
+                                    Value="255" />
+
+                                <TextBlock
+                                    x:Name="RedSliderText"
+                                    Margin="8,0,0,0"
+                                    FontSize="32"
+                                    Text="{Binding ElementName=RedSlider, Path=Value, StringFormat=N0}" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <StackPanel>
+                            <TextBlock
+                                FontSize="32"
+                                Foreground="LightGreen"
+                                Text="Green" />
+
+                            <StackPanel Orientation="Horizontal">
+                                <Slider
+                                    x:Name="GreenSlider"
+                                    Width="100"
+                                    Height="20"
+                                    Maximum="255"
+                                    Minimum="0"
+                                    SmallChange="1"
+                                    ValueChanged="GreenSlider_ValueChanged"
+                                    Value="255" />
+
+                                <TextBlock
+                                    x:Name="GreenSliderText"
+                                    Margin="8,0,0,0"
+                                    FontSize="32"
+                                    Text="{Binding ElementName=GreenSlider, Path=Value, StringFormat=N0}" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <StackPanel>
+                            <TextBlock
+                                FontSize="32"
+                                Foreground="SkyBlue"
+                                Text="Blue" />
+
+                            <StackPanel Orientation="Horizontal">
+                                <Slider
+                                    x:Name="BlueSlider"
+                                    Width="100"
+                                    Height="20"
+                                    Maximum="255"
+                                    Minimum="0"
+                                    SmallChange="1"
+                                    ValueChanged="BlueSlider_ValueChanged"
+                                    Value="255" />
+
+                                <TextBlock
+                                    x:Name="BlueSliderText"
+                                    Margin="8,0,0,0"
+                                    FontSize="32"
+                                    Text="{Binding ElementName=BlueSlider, Path=Value, StringFormat=N0}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal">
+                        <Button
+                            x:Name="EditorGridTitle"
+                            HorizontalAlignment="Left"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Click="EditorGridTitle_Click"
+                            Content="Grid:"
+                            FontSize="36"
+                            Foreground="White">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                        <Button
+                            x:Name="EditorGridBool"
+                            HorizontalAlignment="Left"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Click="EditorGridTitle_Click"
+                            Content="ON"
+                            FontSize="36"
+                            Foreground="LightGreen">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+
+
             </Grid>
         </Grid>
     </Grid>

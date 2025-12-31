@@ -26,7 +26,6 @@ namespace CombatWordle
                     ActualHeight / scaleX);
             }
         }
-
         private Rect ViewportPlus
         {
             get
@@ -65,15 +64,30 @@ namespace CombatWordle
         private const int editorCellSize = 64;
         private GridHelper editorGrid;
 
+        private void UpdateEditorColor()
+        {
+            if (RedSlider == null || GreenSlider == null || BlueSlider == null
+                || RedSliderText == null || GreenSliderText == null || BlueSliderText == null) return;
+            var color = new SolidColorBrush(Color.FromRgb((byte)RedSlider.Value, (byte)GreenSlider.Value, (byte)BlueSlider.Value));
+            RedSliderText.Foreground = color;
+            GreenSliderText.Foreground = color;
+            BlueSliderText.Foreground = color;
+        }
+
         private void TitleBar_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Left)
                 DragMove();
+            if (e.ChangedButton == MouseButton.Right)
+            {
+                TitleText.Foreground = QOL.RandomColor();
+                TitleTextShadow.Foreground = QOL.RandomColor();
+            }
         }
         private void Window_KeyDown(object sender, KeyEventArgs e) => PressedKeys.Add(e.Key);
         private void Window_KeyUp(object sender, KeyEventArgs e) => PressedKeys.Remove(e.Key);
 
-        private void Window_MouseDown(object sender, MouseButtonEventArgs e)
+        private void GameCanvas_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Left)
             {
@@ -93,7 +107,7 @@ namespace CombatWordle
                 }
             }
         }
-        private void Window_MouseUp(object sender, MouseButtonEventArgs e)
+        private void GameCanvas_MouseUp(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Left)
             {
@@ -114,7 +128,7 @@ namespace CombatWordle
                     Mouse.Capture(null);
             }
         }
-        private void Window_MouseMove(object sender, MouseEventArgs e)
+        private void GameCanvas_MouseMove(object sender, MouseEventArgs e)
         {
             var temp = e.GetPosition((UIElement)GameCanvas.Parent);
             ActiveMousePos = new(temp.X / CameraScale.ScaleX - CameraTransform.X, temp.Y / CameraScale.ScaleY - CameraTransform.Y);
@@ -135,7 +149,7 @@ namespace CombatWordle
             }
         }
 
-        private void Window_MouseWheel(object sender, MouseWheelEventArgs e)
+        private void GameCanvas_MouseWheel(object sender, MouseWheelEventArgs e)
         {
             if (!editorMode) return;
             double zoomIn = 1.1;
@@ -154,7 +168,7 @@ namespace CombatWordle
                     tb.Foreground = QOL.RandomColor();
             }
             else if (e.ChangedButton == MouseButton.Left)
-                Window_MouseDown(sender, e);
+                TitleBar_MouseDown(sender, e);
         }
         private void ClosingButton_Click(object sender, RoutedEventArgs e) => Application.Current.Shutdown();
         private void MinimizeButton_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
@@ -232,6 +246,10 @@ namespace CombatWordle
                 EditorGridBool.Foreground = Brushes.LightGreen;
             }
         }
+
+        private void RedSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) => UpdateEditorColor();
+        private void GreenSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) => UpdateEditorColor();
+        private void BlueSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) => UpdateEditorColor();
 
         public MainWindow()
         {

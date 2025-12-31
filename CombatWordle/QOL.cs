@@ -61,6 +61,6 @@ namespace CombatWordle
         public static double GetDistance(Point one, Point two) => Math.Sqrt(Math.Pow(two.X - one.X, 2) + Math.Pow(two.Y - one.Y, 2));
         public static double GetDistanceSquared(Point one, Point two) => Math.Pow(two.X - one.X, 2) + Math.Pow(two.Y - one.Y, 2);
 
-        public static void D(object obj, bool dateTime = true) => Debug.WriteLine(dateTime ? $"[{DateTime.Now}] " : $"{obj}");
+        public static void D(object obj, bool dateTime = true) => Debug.WriteLine(dateTime ? $"[{DateTime.Now}] " + $"{obj}" : $"{obj}");
     }
 }
