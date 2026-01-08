@@ -1,4 +1,4 @@
-# Combat Wordle WPF Project
+# Darakombi WPF Project
 
 ## *Concept Image*
 

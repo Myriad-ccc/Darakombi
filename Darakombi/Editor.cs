@@ -8,9 +8,16 @@
         public int CellSize;
         public Rect Viewport;
 
+        public bool DrawOver { get; set; } = false;
+
         public Editor(int cellSize) => CellSize = cellSize;
 
-        public void Add(EditorDTO obj) => EditorObjects[obj.Cell] = obj;
+        public void Add(EditorDTO obj)
+        {
+            if (!EditorObjects.TryGetValue(obj.Cell, out _) || DrawOver)
+                EditorObjects[obj.Cell] = obj;
+        }
+
         public void Remove((int x, int y) cell) => EditorObjects.Remove(cell);
 
         public void Update(Rect viewport)
@@ -18,6 +25,8 @@
             Viewport = viewport;
             InvalidateVisual();
         }
+
+        public void Clear() => EditorObjects.Clear();
 
         protected override void OnRender(DrawingContext drawingContext)
         {

@@ -12,9 +12,9 @@
     FontFamily="VCR OSD Mono"
     Foreground="White"
     Icon="Assets/Icon.ico"
+    PreviewKeyDown="Window_PreviewKeyDown"
     KeyDown="Window_KeyDown"
     KeyUp="Window_KeyUp"
-    MouseWheel="GameCanvas_MouseWheel"
     ResizeMode="NoResize"
     SnapsToDevicePixels="True"
     UseLayoutRounding="True"
@@ -37,6 +37,7 @@
                 Padding="5,5,0,0"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top"
+                MouseDown="TitleText_MouseDown"
                 FontSize="40"
                 Text="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}" />
             <TextBlock
@@ -44,6 +45,7 @@
                 Padding="6,6,0,0"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top"
+                MouseDown="TitleText_MouseDown"
                 FontSize="40"
                 Text="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}" />
 
@@ -81,18 +83,18 @@
                 </Button>
 
                 <Button
-                    x:Name="MinimizeButton"
+                    x:Name="ForwardButton"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Top"
                     Background="Transparent"
                     BorderThickness="2"
-                    Click="MinimizeButton_Click"
+                    Click="ForwardButton_Click"
                     FontSize="48">
                     <Viewbox Width="48" Height="48">
                         <TextBlock
                             FontSize="48"
                             Foreground="#4CDAE4"
-                            Text="-"
+                            Text="→"
                             TextAlignment="Center" />
                     </Viewbox>
                     <Button.Template>
@@ -137,19 +139,28 @@
             </StackPanel>
         </Grid>
 
-        <Border
+        <Grid
+            x:Name="MainMenu"
             Grid.Row="1"
-            BorderBrush="#282828"
-            BorderThickness="1"
-            RenderOptions.BitmapScalingMode="HighQuality"
-            SnapsToDevicePixels="True">
+            ClipToBounds="True">
 
-            <Grid>
-                <StackPanel
-                    x:Name="StartMenu"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Visibility="Visible">
+            <Canvas
+                x:Name="GameCanvas"
+                MouseDown="GameCanvas_MouseDown"
+                MouseMove="GameCanvas_MouseMove"
+                MouseUp="GameCanvas_MouseUp"
+                MouseWheel="GameCanvas_MouseWheel"
+                Visibility="Hidden">
+                <Canvas.RenderTransform>
+                    <TransformGroup>
+                        <TranslateTransform x:Name="CameraTransform" X="0" Y="0" />
+                        <ScaleTransform x:Name="CameraScale" ScaleX="1" ScaleY="1" />
+                    </TransformGroup>
+                </Canvas.RenderTransform>
+            </Canvas>
+
+            <Grid x:Name="StartMenu" Visibility="Visible">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
 
                     <Button
                         x:Name="PlayButton"
@@ -184,26 +195,27 @@
                             </ControlTemplate>
                         </Button.Template>
                     </Button>
+
+                    <Button
+                        x:Name="MapButton"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Click="MapButton_Click"
+                        Content="Map"
+                        FontSize="84"
+                        Foreground="LightPink">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <ContentPresenter />
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
                 </StackPanel>
             </Grid>
-        </Border>
 
-        <Grid Grid.Row="1" ClipToBounds="True">
-            <Canvas
-                x:Name="GameCanvas"
-                MouseDown="GameCanvas_MouseDown"
-                MouseMove="GameCanvas_MouseMove"
-                MouseUp="GameCanvas_MouseUp"
-                Visibility="Hidden">
-                <Canvas.RenderTransform>
-                    <TransformGroup>
-                        <TranslateTransform x:Name="CameraTransform" X="0" Y="0" />
-                        <ScaleTransform x:Name="CameraScale" ScaleX="1" ScaleY="1" />
-                    </TransformGroup>
-                </Canvas.RenderTransform>
-            </Canvas>
-
-            <Grid x:Name="MapSetter" Visibility="Hidden">
+            <Grid x:Name="MapMenu" Visibility="Hidden">
                 <Grid.RowDefinitions>
                     <RowDefinition />
                     <RowDefinition />
@@ -233,11 +245,11 @@
                     <TextBox
                         x:Name="MapWidthContent"
                         HorizontalAlignment="Center"
-                        BorderThickness="0"
                         Background="Transparent"
+                        BorderThickness="0"
                         FontSize="60"
                         Foreground="White"
-                        TextChanged="MapWidthContent_TextChanged"/>
+                        TextChanged="MapWidthContent_TextChanged" />
                 </StackPanel>
                 <StackPanel
                     Grid.Row="1"
@@ -249,11 +261,11 @@
                     <TextBox
                         x:Name="MapHeightContent"
                         HorizontalAlignment="Center"
-                        BorderThickness="0"
                         Background="Transparent"
+                        BorderThickness="0"
                         FontSize="60"
                         Foreground="White"
-                        TextChanged="MapHeightContent_TextChanged"/>
+                        TextChanged="MapHeightContent_TextChanged" />
                 </StackPanel>
                 <StackPanel
                     Grid.Row="1"
@@ -265,42 +277,30 @@
                         x:Name="ResetMapDimensions"
                         Background="Transparent"
                         BorderThickness="0"
-                        Content="↻"
-                        FontSize="54"
                         Click="ResetMapDimensions_Click"
-                        Foreground="White" />
+                        Content="Reset"
+                        FontSize="54"
+                        Foreground="Orange" />
                     <Button
                         x:Name="SetMapSizeButton"
                         Background="Transparent"
                         BorderThickness="0"
+                        Click="SetMapSizeButton_Click"
                         Content="Set"
                         FontSize="54"
-                        Foreground="LightGreen"
-Click="SetMapSizeButton_Click"/>
+                        Foreground="LightGreen" />
                 </StackPanel>
             </Grid>
 
-            <Grid x:Name="GeneralUI">
-                <TextBlock
-                    x:Name="DebugText"
-                    HorizontalAlignment="Left"
-                    VerticalAlignment="Top"
-                    FontSize="32"
-                    Foreground="White"
-                    Visibility="Hidden" />
+            <Grid x:Name="GameMenu" Visibility="Hidden">
                 <TextBlock
                     x:Name="EntityCounter"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Top"
                     FontSize="32"
-                    Foreground="White"
-                    Visibility="Hidden" />
+                    Foreground="White" />
 
-                <Grid
-                    x:Name="GameOverlay"
-                    HorizontalAlignment="Left"
-                    VerticalAlignment="Bottom"
-                    Visibility="Hidden">
+                <Grid HorizontalAlignment="Left" VerticalAlignment="Bottom">
                     <Grid.RowDefinitions>
                         <RowDefinition />
                         <RowDefinition />
@@ -414,6 +414,10 @@ Click="SetMapSizeButton_Click"/>
                     </Button>
                 </Grid>
 
+            </Grid>
+
+            <Grid x:Name="EditorMenu" Visibility="Hidden">
+
                 <Button
                     x:Name="EditorSave"
                     HorizontalAlignment="Right"
@@ -423,8 +427,7 @@ Click="SetMapSizeButton_Click"/>
                     Click="EditorSave_Click"
                     Content="Save"
                     FontSize="50"
-                    Foreground="White"
-                    Visibility="Hidden">
+                    Foreground="White">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
@@ -436,8 +439,7 @@ Click="SetMapSizeButton_Click"/>
                     x:Name="EditorOverlay"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Bottom"
-                    Orientation="Vertical"
-                    Visibility="Hidden">
+                    Orientation="Vertical">
 
                     <StackPanel HorizontalAlignment="Left" VerticalAlignment="Bottom">
                         <StackPanel>
@@ -518,6 +520,39 @@ Click="SetMapSizeButton_Click"/>
 
                     <StackPanel Orientation="Horizontal">
                         <Button
+                            x:Name="DrawOverTitle"
+                            HorizontalAlignment="Left"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Click="DrawOverTitle_Click"
+                            Content="DrOv:"
+                            FontSize="36"
+                            Foreground="White">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                        <Button
+                            x:Name="DrawOverBool"
+                            HorizontalAlignment="Left"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Click="DrawOverTitle_Click"
+                            Content="OFF"
+                            FontSize="36"
+                            Foreground="IndianRed">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal">
+                        <Button
                             x:Name="EditorGridTitle"
                             HorizontalAlignment="Left"
                             Background="Transparent"
@@ -550,8 +585,15 @@ Click="SetMapSizeButton_Click"/>
                     </StackPanel>
                 </StackPanel>
 
-
             </Grid>
+
+            <TextBlock
+                x:Name="DebugText"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                FontSize="32"
+                Foreground="White" 
+                />
         </Grid>
     </Grid>
 </Window>
