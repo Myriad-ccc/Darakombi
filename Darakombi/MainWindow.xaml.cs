@@ -70,18 +70,6 @@ namespace Darakombi
         private bool editorSaved = false;
         private bool editorUpdate = false;
 
-        private bool hasInitialized = false;
-        private void Initialize()
-        {
-            GameCanvas.Visibility = Visibility.Visible;
-            GameCanvas.Children.Add(Map);
-            Canvas.SetLeft(Map, 0);
-            Canvas.SetTop(Map, 0);
-            Panel.SetZIndex(Map, 0);
-
-            hasInitialized = true;
-        }
-
         private enum Menu
         {
             Start,
@@ -372,7 +360,7 @@ namespace Darakombi
                 && height >= 100
                 && height <= 20000)
             {
-                Map = new(width, height);
+                ResizeMap(new(width, height));
                 MapMenu.Visibility = Visibility.Hidden;
                 StartMenu.Visibility = Visibility.Visible;
             }
@@ -719,9 +707,8 @@ namespace Darakombi
         private readonly Size DefaultMapSize = new(12800, 12800);
         private async void Start()
         {
-            Map ??= new(DefaultMapSize);
-            if (!hasInitialized)
-                Initialize();
+            GameCanvas.Visibility = Visibility.Visible;
+            if (Map == null) CreateMap(DefaultMapSize);
 
             if (CurrentMenu == Menu.Game) StartGame();
             else if (CurrentMenu == Menu.Editor) StartEditor();
@@ -732,6 +719,7 @@ namespace Darakombi
         private void StartGame()
         {
             game ??= new(Map);
+            game.spatialGrid ??= new(Map.Width, Map.Height);
             game.AddPlayer();
             GameCellGrid ??= new GridHelper(GameCellSize, (int)Map.Width, (int)Map.Height, Brushes.Green, 0.5);
             GameCanvas.Children.Add(GameCellGrid);
@@ -743,21 +731,41 @@ namespace Darakombi
 
         }
 
-        public void ResizeMap(int width, int height)
+        public void CreateMap(Size size)
         {
-            Map = new(width, height);
-            game.spatialGrid = new(width, height);
+            Map = new(size);
+            GameCanvas.Children.Add(Map);
+            Canvas.SetLeft(Map, 0);
+            Canvas.SetTop(Map, 0);
+            Panel.SetZIndex(Map, 0);
+        }
 
-            GameCellGrid.Width = EditorGrid.Width = width;
-            GameCellGrid.Height = EditorGrid.Height = height;
-            GameCellGrid.Update();
-            EditorGrid.Update();
+        public void ResizeMap(Size size)
+        {
+            double w = size.Width;
+            double h = size.Height;
+
+            if (Map != null)
+            {
+                Map.Width = w;
+                Map.Height = h;
+            }
+            else
+                CreateMap(size);
+
+            GameCellGrid?.Width = w;
+            GameCellGrid?.Height = h;
+            GameCellGrid?.Update();
+
+            EditorGrid?.Width = w;
+            EditorGrid?.Height = h;
+            EditorGrid?.Update();
         }
 
         private void StartEditor()
         {
             editor ??= new(EditorCellSize);
-            editor.ResizeMap += size => Map = new(size);
+            editor.ResizeMap += ResizeMap;
             GameCanvas.Children.Add(editor);
             Canvas.SetLeft(editor, 0);
             Canvas.SetTop(editor, 0);
