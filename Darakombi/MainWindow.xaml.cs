@@ -6,6 +6,7 @@ global using System.Windows;
 global using System.Windows.Controls;
 global using System.Windows.Input;
 global using System.Windows.Media;
+using Microsoft.Win32;
 
 namespace Darakombi
 {
@@ -55,7 +56,8 @@ namespace Darakombi
         private SpatialGrid grid => game.spatialGrid;
         private Player player => game.Player;
 
-        private StringBuilder debugInfo = new();
+        private StringBuilder dynamicDebugInfo = new();
+        private StringBuilder eventDebugInfo = new();
         private StringBuilder entityCounter = new();
         private Point ActiveMousePos = new();
 
@@ -63,6 +65,10 @@ namespace Darakombi
         private GridHelper GameCellGrid;
         private const int EditorCellSize = 64;
         private GridHelper EditorGrid;
+
+        private bool editorDrawing = false;
+        private bool editorSaved = false;
+        private bool editorUpdate = false;
 
         private bool hasInitialized = false;
         private void Initialize()
@@ -144,7 +150,10 @@ namespace Darakombi
             switch (CurrentMenu)
             {
                 case Menu.Editor:
-                    editor?.Clear();
+                    if (editor.Tiles.Count > 0 && !editorSaved)
+                    {
+                        EditorQuitWarning.Visibility = Visibility.Visible;
+                    }
                     break;
             }
         }
@@ -158,8 +167,8 @@ namespace Darakombi
         {
             if (e.ChangedButton == MouseButton.Right)
             {
-                TitleText.Foreground = QOL.RandomColor();
                 TitleTextShadow.Foreground = QOL.RandomColor();
+                TitleText.Foreground = QOL.RandomColor();
             }
         }
         private void ClosingButton_Click(object sender, RoutedEventArgs e) => Application.Current.Shutdown();
@@ -187,23 +196,30 @@ namespace Darakombi
         {
             if (CurrentMenu == Menu.Editor)
             {
-                if (e.ChangedButton == MouseButton.Right)
+                if (e.ChangedButton == MouseButton.Left)
+                {
+                    var worldPos = ScreenToWorld(e.GetPosition((UIElement)GameCanvas.Parent));
+                    EditorDrawTile(worldPos);
+                    editorDrawing = true;
+                    LastEOPos = worldPos;
+                }
+                else if (e.ChangedButton == MouseButton.Right)
                 {
                     QOL.D("Started dragging camera");
                     DraggingCamera = true;
                     LastMousePos = e.GetPosition(this);
                     Mouse.Capture((UIElement)sender);
                 }
-                else if (e.ChangedButton == MouseButton.Left)
-                {
-                    var worldPos = ScreenToWorld(e.GetPosition((UIElement)GameCanvas.Parent));
-                    EditorPlace(worldPos);
-                    LastEOPos = worldPos;
-                }
+                editorUpdate = true;
             }
         }
         private void GameCanvas_MouseUp(object sender, MouseButtonEventArgs e)
         {
+            if (e.ChangedButton == MouseButton.Left)
+            {
+                editorDrawing = false;
+            }
+
             if (e.ChangedButton == MouseButton.Right)
             {
                 if (CurrentMenu == Menu.Editor && DraggingCamera)
@@ -222,6 +238,7 @@ namespace Darakombi
                 if (Mouse.Captured == sender)
                     Mouse.Capture(null);
             }
+            editorUpdate = true;
         }
         private void GameCanvas_MouseMove(object sender, MouseEventArgs e)
         {
@@ -245,7 +262,7 @@ namespace Darakombi
                         LastMousePos = currentPos;
                     }
                 }
-                else if (e.LeftButton == MouseButtonState.Pressed)
+                else if (e.LeftButton == MouseButtonState.Pressed && editorDrawing)
                 {
                     Vector direction = ActiveMousePos - LastEOPos;
                     double distance = direction.Length;
@@ -255,12 +272,13 @@ namespace Darakombi
                     {
                         direction.Normalize();
                         for (double d = 0; d < distance; d += step)
-                            EditorPlace(LastEOPos + d * direction);
+                            EditorDrawTile(LastEOPos + d * direction);
                     }
                     LastEOPos = ActiveMousePos;
-                    EditorPlace(ActiveMousePos);
+                    EditorDrawTile(ActiveMousePos);
                     e.Handled = true;
                 }
+                editorUpdate = true;
             }
         }
         private void GameCanvas_MouseWheel(object sender, MouseWheelEventArgs e)
@@ -268,7 +286,7 @@ namespace Darakombi
             if (CurrentMenu != Menu.Editor) return;
             double zoomIn = 1.1;
             double factor = Math.Pow(zoomIn, e.Delta / 120.0);
-            double newScale = Math.Max(0.35, Math.Min(CameraScale.ScaleX * factor, 5.0));
+            double newScale = Math.Max(0.1, Math.Min(CameraScale.ScaleX * factor, 5.0));
 
             var mousePos = e.GetPosition((UIElement)GameCanvas.Parent);
             var worldPos = ScreenToWorld(mousePos);
@@ -278,6 +296,9 @@ namespace Darakombi
 
             CameraScale.ScaleY = newScale;
             CameraScale.ScaleX = newScale;
+
+            editorUpdate = true;
+            DebugHelper.ZoomFactor = newScale;
         }
 
         private void PlayButton_Click(object sender, RoutedEventArgs e) { GoToMenu(Menu.Game); Start(); }
@@ -335,8 +356,82 @@ namespace Darakombi
 
         private void EditorSave_Click(object sender, RoutedEventArgs e)
         {
-
+            EditorQuitWarning.Visibility = Visibility.Hidden;
+            if (editor?.Tiles.Count > 0)
+            {
+                editor.Save("TestSave.txt", Map.Size);
+                MessageBox.Show("saved!");
+            }
         }
+        private void SetMapSizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (int.TryParse(MapWidthContent.Text, out int width)
+                && width >= 100
+                && width <= 20000
+                && int.TryParse(MapHeightContent.Text, out int height)
+                && height >= 100
+                && height <= 20000)
+            {
+                Map = new(width, height);
+                MapMenu.Visibility = Visibility.Hidden;
+                StartMenu.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void MapWidthContent_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (int.TryParse(MapWidthContent.Text, out int width))
+                if (width >= 100 && width <= 20000)
+                {
+                    SetMapSizeButton.IsHitTestVisible = true;
+                    SetMapSizeButton.Foreground = Brushes.LightGreen;
+                    return;
+                }
+            SetMapSizeButton.IsHitTestVisible = false;
+            SetMapSizeButton.Foreground = Brushes.IndianRed;
+        }
+        private void MapHeightContent_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (int.TryParse(MapHeightContent.Text, out int height))
+                if (height >= 100 && height <= 20000)
+                {
+                    SetMapSizeButton.IsHitTestVisible = true;
+                    SetMapSizeButton.Foreground = Brushes.LightGreen;
+                    return;
+                }
+            SetMapSizeButton.IsHitTestVisible = false;
+            SetMapSizeButton.Foreground = Brushes.IndianRed;
+        }
+        private void ResetMapDimensions_Click(object sender, RoutedEventArgs e)
+        {
+            if (MapWidthContent is null || MapHeightContent is null) return;
+            MapWidthContent.Text = "12800";
+            MapHeightContent.Text = "12800";
+        }
+
+        private void DrawOverTitle_Click(object sender, RoutedEventArgs e)
+        {
+            if (editor.DrawOver)
+            {
+                DrawOverBool.Content = "OFF";
+                DrawOverBool.Foreground = Brushes.IndianRed;
+            }
+            else
+            {
+                DrawOverBool.Content = "ON";
+                DrawOverBool.Foreground = Brushes.LightGreen;
+            }
+            editor.DrawOver = !editor.DrawOver;
+        }
+
+        private void MapButton_Click(object sender, RoutedEventArgs e)
+        {
+            StartMenu.Visibility = Visibility.Hidden;
+            MapMenu.Visibility = Visibility.Visible;
+            MapButton.Foreground = Brushes.White;
+        }
+
+        private void EditorDiscardButton_Click(object sender, RoutedEventArgs e) => editor?.Clear();
         private void EditorGridTitle_Click(object sender, RoutedEventArgs e)
         {
             bool isShown = EditorGrid.Visibility == Visibility.Visible;
@@ -448,8 +543,10 @@ namespace Darakombi
 
             player.Pos = pos;
 
-            debugInfo.AppendLine($"dx:{d.X:F1}\ndy:{d.Y:F1}");
-            debugInfo.AppendLine($"vx:{d.X * 1 / dt:F1}\nvy:{d.Y * 1 / dt:F1}");
+            DebugHelper.DeltaX = d.X;
+            DebugHelper.DeltaY = d.Y;
+            DebugHelper.VelocityX = d.X * 1 / dt;
+            DebugHelper.VelocityY = d.Y * 1 / dt;
         }
 
         private void PlayerCameraMovement()
@@ -469,7 +566,8 @@ namespace Darakombi
             CameraTransform.X = offsetX;
             CameraTransform.Y = offsetY;
 
-            debugInfo.AppendLine($"px:{px:F1}\npy:{py:F1}");
+            DebugHelper.PlayerX = px;
+            DebugHelper.PlayerY = py;
         }
 
         public void Move(double dt)
@@ -532,30 +630,32 @@ namespace Darakombi
             entityCounter.AppendLine($"rocks:{game.Rocks.Count}");
             entityCounter.AppendLine($"enemies:{game.Enemies.Count}");
             EntityCounter.Text = entityCounter.ToString();
+            DebugText.Text = new StringBuilder(DebugHelper.GetGameEvent() + '\n' + DebugHelper.GetGameDynamic()).ToString();
         }
 
         private void EditorMove(double dt)
         {
             double pan = 1000 * dt;
-            if (PressedKeys.Contains(Key.W) || PressedKeys.Contains(Key.Up)) CameraTransform.Y += pan;
-            if (PressedKeys.Contains(Key.A) || PressedKeys.Contains(Key.Left)) CameraTransform.X += pan;
-            if (PressedKeys.Contains(Key.D) || PressedKeys.Contains(Key.Right)) CameraTransform.X -= pan;
-            if (PressedKeys.Contains(Key.S) || PressedKeys.Contains(Key.Down)) CameraTransform.Y -= pan;
+            if (PressedKeys.Contains(Key.W) || PressedKeys.Contains(Key.Up)) { CameraTransform.Y += pan; editorUpdate = true; }
+            if (PressedKeys.Contains(Key.A) || PressedKeys.Contains(Key.Left)) { CameraTransform.X += pan; editorUpdate = true; }
+            if (PressedKeys.Contains(Key.D) || PressedKeys.Contains(Key.Right)) { CameraTransform.X -= pan; editorUpdate = true; }
+            if (PressedKeys.Contains(Key.S) || PressedKeys.Contains(Key.Down)) { CameraTransform.Y -= pan; editorUpdate = true; }
         }
 
         private void EditorDebug()
         {
-            debugInfo.AppendLine($"mx:{ActiveMousePos.X:F1}");
-            debugInfo.AppendLine($"my:{ActiveMousePos.Y:F1}");
-            debugInfo.AppendLine($"cx:{CameraCenter.X:F1}");
-            debugInfo.AppendLine($"cy:{CameraCenter.Y:F1}");
+            DebugHelper.MousePosX = ActiveMousePos.X;
+            DebugHelper.MousePosY = ActiveMousePos.Y;
+            DebugHelper.CameraX = CameraCenter.X;
+            DebugHelper.CameraY = CameraCenter.Y;
+            DebugText.Text = DebugHelper.GetEditorEvent();
         }
 
         private void GlobalDebug(double dt)
         {
-            debugInfo.AppendLine($"fps:{QOL.GetAverageFPS(dt):F0}");
-            debugInfo.AppendLine($"dt:{dt:F3}");
-            DebugText.Text = debugInfo.ToString();
+            DebugHelper.FramesPerSecond = QOL.GetAverageFPS(dt);
+            DebugHelper.DeltaTime = dt;
+            DebugGlobalText.Text = DebugHelper.GetApp();
         }
 
         private void GameUpdate(double dt)
@@ -571,23 +671,30 @@ namespace Darakombi
         private void EditorUpdate(double dt)
         {
             EditorMove(dt);
-            editor.Update(ViewportPlus);
-            EditorDebug();
+            if (editorUpdate)
+            {
+                editor.Update(ViewportPlus);
+                EditorDebug();
+                editorUpdate = false;
+            }
         }
 
-        private void EditorPlace(Point worldPos)
+        private void EditorDrawTile(Point worldPos)
         {
             int cellX = (int)Math.Floor(worldPos.X / EditorCellSize) * EditorCellSize;
             int cellY = (int)Math.Floor(worldPos.Y / EditorCellSize) * EditorCellSize;
 
-            var obj = new Editor.EditorDTO((cellX, cellY), RedSliderText.Foreground);
-            editor.Add(obj);
+            var tile = new Editor.Tile((cellX, cellY), RedSliderText.Foreground);
+            editor.Add(tile);
+
+            editorUpdate = true;
             QOL.D($"Placed block at {cellX}, {cellY}");
         }
 
         private void Update(double dt)
         {
-            debugInfo.Clear();
+            dynamicDebugInfo.Clear();
+            eventDebugInfo.Clear();
             if (CurrentMenu == Menu.Game)
             {
                 GameUpdate(dt);
@@ -626,7 +733,7 @@ namespace Darakombi
         {
             game ??= new(Map);
             game.AddPlayer();
-            GameCellGrid = new GridHelper(GameCellSize, (int)Map.Width, (int)Map.Height, Brushes.Green, 0.5);
+            GameCellGrid ??= new GridHelper(GameCellSize, (int)Map.Width, (int)Map.Height, Brushes.Green, 0.5);
             GameCanvas.Children.Add(GameCellGrid);
             Panel.SetZIndex(GameCellGrid, 10);
         }
@@ -636,86 +743,57 @@ namespace Darakombi
 
         }
 
+        public void ResizeMap(int width, int height)
+        {
+            Map = new(width, height);
+            game.spatialGrid = new(width, height);
+
+            GameCellGrid.Width = EditorGrid.Width = width;
+            GameCellGrid.Height = EditorGrid.Height = height;
+            GameCellGrid.Update();
+            EditorGrid.Update();
+        }
+
         private void StartEditor()
         {
-            editor = new(EditorCellSize);
+            editor ??= new(EditorCellSize);
+            editor.ResizeMap += size => Map = new(size);
             GameCanvas.Children.Add(editor);
+            Canvas.SetLeft(editor, 0);
+            Canvas.SetTop(editor, 0);
+            Panel.SetZIndex(editor, 20);
 
-            EditorGrid = new GridHelper(EditorCellSize, (int)Map.Width, (int)Map.Height, Brushes.White, 0.05);
+            EditorGrid ??= new GridHelper(EditorCellSize, (int)Map.Width, (int)Map.Height, Brushes.White, 0.05);
             GameCanvas.Children.Add(EditorGrid);
             Panel.SetZIndex(EditorGrid, 10);
 
+            ResetEditorCam();
+        }
+
+        private void ResetEditorCam()
+        {
             CameraScale.ScaleX = CameraScale.ScaleY = 0.5;
             CameraTransform.X = CameraTransform.X / CameraScale.ScaleX - Map.Center.X + ActualWidth / 2;
             CameraTransform.Y = CameraTransform.Y / CameraScale.ScaleY - Map.Center.Y + ActualHeight / 2;
         }
 
-        private void SetMapSizeButton_Click(object sender, RoutedEventArgs e)
+        private void ChooseButton_Click(object sender, RoutedEventArgs e)
         {
-            if (int.TryParse(MapWidthContent.Text, out int width)
-                && width >= 100
-                && width <= 20000
-                && int.TryParse(MapHeightContent.Text, out int height)
-                && height >= 100
-                && height <= 20000)
+            var dialog = new OpenFileDialog()
             {
-                Map = new(width, height);
-                MapMenu.Visibility = Visibility.Hidden;
-                StartMenu.Visibility = Visibility.Visible;
-            }
-        }
-
-        private void MapWidthContent_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            if (int.TryParse(MapWidthContent.Text, out int width))
-                if (width >= 100 && width <= 20000)
-                {
-                    SetMapSizeButton.IsHitTestVisible = true;
-                    SetMapSizeButton.Foreground = Brushes.LightGreen;
-                    return;
-                }
-            SetMapSizeButton.IsHitTestVisible = false;
-            SetMapSizeButton.Foreground = Brushes.IndianRed;
-        }
-        private void MapHeightContent_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            if (int.TryParse(MapHeightContent.Text, out int height))
-                if (height >= 100 && height <= 20000)
-                {
-                    SetMapSizeButton.IsHitTestVisible = true;
-                    SetMapSizeButton.Foreground = Brushes.LightGreen;
-                    return;
-                }
-            SetMapSizeButton.IsHitTestVisible = false;
-            SetMapSizeButton.Foreground = Brushes.IndianRed;
-        }
-        private void ResetMapDimensions_Click(object sender, RoutedEventArgs e)
-        {
-            if (MapWidthContent is null || MapHeightContent is null) return;
-            MapWidthContent.Text = "12800";
-            MapHeightContent.Text = "12800";
-        }
-
-        private void DrawOverTitle_Click(object sender, RoutedEventArgs e)
-        {
-            if (editor.DrawOver)
+                Title = "Pick serialized map",
+                Filter = "Text files (*.txt)|*.txt",
+                DefaultExt = ".txt",
+                Multiselect = false,
+            };
+            bool? result = dialog.ShowDialog();
+            if (result == true)
             {
-                DrawOverBool.Content = "OFF";
-                DrawOverBool.Foreground = Brushes.IndianRed;
+                GoToMenu(Menu.Editor);
+                Start();
+                editor.Clear();
+                editor?.Load(dialog.FileName);
             }
-            else
-            {
-                DrawOverBool.Content = "ON";
-                DrawOverBool.Foreground = Brushes.LightGreen;
-            }
-            editor.DrawOver = !editor.DrawOver;
-        }
-
-        private void MapButton_Click(object sender, RoutedEventArgs e)
-        {
-            StartMenu.Visibility = Visibility.Hidden;
-            MapMenu.Visibility = Visibility.Visible;
-            MapButton.Foreground = Brushes.White;
         }
     }
 }

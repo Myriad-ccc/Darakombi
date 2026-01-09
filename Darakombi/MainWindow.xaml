@@ -12,9 +12,9 @@
     FontFamily="VCR OSD Mono"
     Foreground="White"
     Icon="Assets/Icon.ico"
-    PreviewKeyDown="Window_PreviewKeyDown"
     KeyDown="Window_KeyDown"
     KeyUp="Window_KeyUp"
+    PreviewKeyDown="Window_PreviewKeyDown"
     ResizeMode="NoResize"
     SnapsToDevicePixels="True"
     UseLayoutRounding="True"
@@ -37,16 +37,16 @@
                 Padding="5,5,0,0"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top"
-                MouseDown="TitleText_MouseDown"
                 FontSize="40"
+                MouseDown="TitleText_MouseDown"
                 Text="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}" />
             <TextBlock
                 x:Name="TitleText"
                 Padding="6,6,0,0"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top"
-                MouseDown="TitleText_MouseDown"
                 FontSize="40"
+                MouseDown="TitleText_MouseDown"
                 Text="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}" />
 
             <StackPanel
@@ -212,6 +212,24 @@
                             </ControlTemplate>
                         </Button.Template>
                     </Button>
+
+                    <Button
+                        x:Name="ChooseButton"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Click="ChooseButton_Click"
+                        Content="Choose"
+                        FontSize="84"
+                        Foreground="White">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <ContentPresenter />
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+
                 </StackPanel>
             </Grid>
 
@@ -418,6 +436,50 @@
 
             <Grid x:Name="EditorMenu" Visibility="Hidden">
 
+                <Grid x:Name="EditorQuitWarning" Visibility="Hidden">
+
+                    <Grid.RowDefinitions>
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock
+                        Grid.ColumnSpan="3"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontSize="58"
+                        Text="Unsaved work" />
+                    <Button
+                        x:Name="EditorDiscardButton"
+                        Grid.Row="1"
+                        Grid.Column="1"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Click="EditorDiscardButton_Click"
+                        Content="Discard"
+                        FontSize="44"
+                        Foreground="IndianRed" />
+                    <Button
+                        Grid.Row="1"
+                        Grid.Column="1"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Click="EditorSave_Click"
+                        Content="Save"
+                        FontSize="44"
+                        Foreground="LightGreen" />
+                </Grid>
+
                 <Button
                     x:Name="EditorSave"
                     HorizontalAlignment="Right"
@@ -587,13 +649,19 @@
 
             </Grid>
 
-            <TextBlock
-                x:Name="DebugText"
+            <StackPanel
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top"
-                FontSize="32"
-                Foreground="White" 
-                />
+                Orientation="Vertical">
+                <TextBlock
+                    x:Name="DebugGlobalText"
+                    FontSize="32"
+                    Foreground="White" />
+                <TextBlock
+                    x:Name="DebugText"
+                    FontSize="32"
+                    Foreground="White" />
+            </StackPanel>
         </Grid>
     </Grid>
 </Window>
