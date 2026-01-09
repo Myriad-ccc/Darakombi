@@ -55,47 +55,18 @@
                 Orientation="Horizontal">
 
                 <Button
-                    x:Name="BackButton"
-                    Margin="2,0,0,0"
+                    x:Name="EscapeButtonMenu"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Top"
                     Background="Transparent"
                     BorderThickness="2"
-                    Click="BackButton_Click"
-                    FontSize="48">
-                    <Viewbox Width="48" Height="48">
-                        <TextBlock
-                            FontSize="48"
-                            Foreground="#56D959"
-                            Text="←"
-                            TextAlignment="Center" />
-                    </Viewbox>
-                    <Button.Template>
-                        <ControlTemplate TargetType="Button">
-                            <Border
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                        </ControlTemplate>
-                    </Button.Template>
-                </Button>
-
-                <Button
-                    x:Name="ForwardButton"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Top"
-                    Background="Transparent"
-                    BorderThickness="2"
-                    Click="ForwardButton_Click"
+                    Click="EscapeButtonMenu_Click"
                     FontSize="48">
                     <Viewbox Width="48" Height="48">
                         <TextBlock
                             FontSize="48"
                             Foreground="#4CDAE4"
-                            Text="→"
-                            TextAlignment="Center" />
+                            Text="≡"/>
                     </Viewbox>
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
@@ -310,7 +281,7 @@
                 </StackPanel>
             </Grid>
 
-            <Grid x:Name="GameMenu" Visibility="Hidden">
+            <Grid x:Name="GameHUD" Visibility="Hidden">
                 <TextBlock
                     x:Name="EntityCounter"
                     HorizontalAlignment="Right"
@@ -434,50 +405,53 @@
 
             </Grid>
 
-            <Grid x:Name="EditorMenu" Visibility="Hidden">
+            <Grid x:Name="EditorHUD" Visibility="Hidden">
 
-                <Grid x:Name="EditorQuitWarning" Visibility="Hidden">
+                <Grid
+                    x:Name="EditorQuitWarning"
+                    Background="#80000000"
+                    Visibility="Hidden">
 
-                    <Grid.RowDefinitions>
-                        <RowDefinition />
-                        <RowDefinition />
-                        <RowDefinition />
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition />
-                        <ColumnDefinition />
-                        <ColumnDefinition />
-                    </Grid.ColumnDefinitions>
-
-                    <TextBlock
-                        Grid.ColumnSpan="3"
+                    <Border
+                        Width="Auto"
+                        Padding="24"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
-                        FontSize="58"
-                        Text="Unsaved work" />
-                    <Button
-                        x:Name="EditorDiscardButton"
-                        Grid.Row="1"
-                        Grid.Column="1"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
-                        Background="Transparent"
-                        BorderThickness="0"
-                        Click="EditorDiscardButton_Click"
-                        Content="Discard"
-                        FontSize="44"
-                        Foreground="IndianRed" />
-                    <Button
-                        Grid.Row="1"
-                        Grid.Column="1"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Center"
-                        Background="Transparent"
-                        BorderThickness="0"
-                        Click="EditorSave_Click"
-                        Content="Save"
-                        FontSize="44"
-                        Foreground="LightGreen" />
+                        Background="#181818"
+                        CornerRadius="10">
+
+                        <StackPanel>
+                            <TextBlock
+                                Margin="0,0,0,12"
+                                FontSize="50"
+                                FontWeight="SemiBold"
+                                Foreground="White"
+                                Text="Unsaved changes"
+                                TextAlignment="Center" />
+
+                            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                                <Button
+                                    x:Name="EditorDiscardButton"
+                                    MinWidth="90"
+                                    Margin="0,0,8,0"
+                                    Background="Gray"
+                                    BorderThickness="0"
+                                    Click="EditorDiscardButton_Click"
+                                    Content="Discard"
+                                    FontSize="36"
+                                    Foreground="White" />
+
+                                <Button
+                                    MinWidth="90"
+                                    Background="Gray"
+                                    BorderThickness="0"
+                                    Click="EditorSave_Click"
+                                    Content="Save"
+                                    FontSize="36"
+                                    Foreground="White" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
                 </Grid>
 
                 <Button
