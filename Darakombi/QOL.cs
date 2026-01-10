@@ -60,5 +60,10 @@ namespace Darakombi
         public static double GetDistanceSquared(Point one, Point two) => Math.Pow(two.X - one.X, 2) + Math.Pow(two.Y - one.Y, 2);
 
         public static void D(object obj, bool dateTime = true) => Debug.WriteLine(dateTime ? $"[{DateTime.Now}] " + $"{obj}" : $"{obj}");
+
+        public static Point ScreenToWorld(Point screenPos, TranslateTransform translate, ScaleTransform scale) =>
+            new(
+                (screenPos.X / scale.ScaleX) - translate.X,
+                (screenPos.Y / scale.ScaleY) - translate.Y);
     }
 }

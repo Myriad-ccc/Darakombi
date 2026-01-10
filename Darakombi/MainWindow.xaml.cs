@@ -7,7 +7,6 @@ global using System.Windows.Controls;
 global using System.Windows.Input;
 global using System.Windows.Media;
 using Microsoft.Win32;
-using System.IO;
 
 namespace Darakombi
 {
@@ -17,25 +16,23 @@ namespace Darakombi
         private double lastTime;
         private int ticks;
 
+        private GameManager GameManager;
+        private EditorManager EditorManager;
+        private IManager Current;
+
+        private GlobalContext Context;
+
         private Rect Viewport
         {
             get
             {
                 var scaleX = CameraScale.ScaleX == 0 ? 1 : CameraScale.ScaleX;
+                var scaleY = CameraScale.ScaleY == 0 ? 1 : CameraScale.ScaleY;
                 return new(
                     -CameraTransform.X,
                     -CameraTransform.Y,
                     ActualWidth / scaleX,
-                    ActualHeight / scaleX);
-            }
-        }
-        private Rect ViewportPlus
-        {
-            get
-            {
-                var temp = Viewport;
-                temp.Inflate(100, 100);
-                return temp;
+                    ActualHeight / scaleY);
             }
         }
 
@@ -44,34 +41,21 @@ namespace Darakombi
             ActualHeight / (CameraScale.ScaleY * 2) - CameraTransform.Y);
 
         private readonly HashSet<Key> PressedKeys = [];
-        private bool DraggingCamera;
-        private Point LastMousePos;
-
-        private Point LastEOPos;
-
         private Map Map;
-        private GameState game;
-        private Editor editor;
-        private SceneManager sceneManager;
-
         private readonly Size DefaultMapSize = new(12800, 12800);
 
-        private SpatialGrid grid => game.spatialGrid;
-        private Player player => game.Player;
+        private Player Player => GameManager?.Player;
+        private SpatialGrid SpatialGrid => GameManager?.SpatialGrid;
+        private Editor Editor => EditorManager?.Editor;
 
         private StringBuilder dynamicDebugInfo = new();
         private StringBuilder eventDebugInfo = new();
         private StringBuilder entityCounter = new();
-        private Point ActiveMousePos = new();
 
         private const int GameCellSize = 128;
-        private GridHelper GameCellGrid;
         private const int EditorCellSize = 64;
-        private GridHelper EditorGrid;
 
-        private bool editorDrawing = false;
-        private bool editorSaved = false;
-        private bool editorUpdate = false;
+        private Brush EditorTileColor => RedSliderText.Foreground;
 
         private enum Menu
         {
@@ -117,109 +101,20 @@ namespace Darakombi
         {
             if (CurrentMenu == Menu.Editor)
             {
-                if (e.ChangedButton == MouseButton.Left)
-                {
-                    var worldPos = ScreenToWorld(e.GetPosition((UIElement)GameCanvas.Parent));
-                    EditorDrawTile(worldPos);
-                    editorDrawing = true;
-                    LastEOPos = worldPos;
-                }
-                else if (e.ChangedButton == MouseButton.Right)
-                {
-                    QOL.D("Started dragging camera");
-                    DraggingCamera = true;
-                    LastMousePos = e.GetPosition(this);
-                    Mouse.Capture((UIElement)sender);
-                }
-                editorUpdate = true;
+                EditorManager.OnMouseDown(sender, e, EditorTileColor);
             }
         }
         private void GameCanvas_MouseUp(object sender, MouseButtonEventArgs e)
         {
-            if (e.ChangedButton == MouseButton.Left)
-            {
-                editorDrawing = false;
-            }
-
-            if (e.ChangedButton == MouseButton.Right)
-            {
-                if (CurrentMenu == Menu.Editor && DraggingCamera)
-                {
-                    QOL.D("Stopped dragging camera");
-                    var currentPos = e.GetPosition(this);
-
-                    double dx = currentPos.X - LastMousePos.X;
-                    double dy = currentPos.Y - LastMousePos.Y;
-
-                    CameraTransform.X += dx;
-                    CameraTransform.Y += dy;
-
-                    LastMousePos = currentPos;
-                }
-                if (Mouse.Captured == sender)
-                    Mouse.Capture(null);
-            }
-            editorUpdate = true;
+            if (CurrentMenu == Menu.Editor) EditorManager.OnMouseUp(sender, e);
         }
         private void GameCanvas_MouseMove(object sender, MouseEventArgs e)
         {
-            var screenMousePos = e.GetPosition((UIElement)GameCanvas.Parent);
-            ActiveMousePos = ScreenToWorld(screenMousePos);
-
-            if (CurrentMenu == Menu.Editor)
-            {
-                if (e.RightButton == MouseButtonState.Pressed)
-                {
-                    if (DraggingCamera)
-                    {
-                        QOL.D("Moving camera");
-                        var currentPos = e.GetPosition(this);
-                        double dx = currentPos.X - LastMousePos.X;
-                        double dy = currentPos.Y - LastMousePos.Y;
-
-                        CameraTransform.X += dx / CameraScale.ScaleX;
-                        CameraTransform.Y += dy / CameraScale.ScaleY;
-
-                        LastMousePos = currentPos;
-                    }
-                }
-                else if (e.LeftButton == MouseButtonState.Pressed && editorDrawing)
-                {
-                    Vector direction = ActiveMousePos - LastEOPos;
-                    double distance = direction.Length;
-                    double step = EditorCellSize * 0.9;
-
-                    if (distance > step)
-                    {
-                        direction.Normalize();
-                        for (double d = 0; d < distance; d += step)
-                            EditorDrawTile(LastEOPos + d * direction);
-                    }
-                    LastEOPos = ActiveMousePos;
-                    EditorDrawTile(ActiveMousePos);
-                    e.Handled = true;
-                }
-                editorUpdate = true;
-            }
+            if (CurrentMenu == Menu.Editor) EditorManager.OnMouseMove(sender, e, EditorTileColor);
         }
         private void GameCanvas_MouseWheel(object sender, MouseWheelEventArgs e)
         {
-            if (CurrentMenu != Menu.Editor) return;
-            double zoomIn = 1.1;
-            double factor = Math.Pow(zoomIn, e.Delta / 120.0);
-            double newScale = Math.Max(0.1, Math.Min(CameraScale.ScaleX * factor, 5.0));
-
-            var mousePos = e.GetPosition((UIElement)GameCanvas.Parent);
-            var worldPos = ScreenToWorld(mousePos);
-
-            CameraTransform.X = (mousePos.X / newScale) - worldPos.X;
-            CameraTransform.Y = (mousePos.Y / newScale) - worldPos.Y;
-
-            CameraScale.ScaleY = newScale;
-            CameraScale.ScaleX = newScale;
-
-            editorUpdate = true;
-            DebugHelper.ZoomFactor = newScale;
+            if (CurrentMenu == Menu.Editor) EditorManager.OnMouseWheel(sender, e);
         }
 
         private void PlayButton_Click(object sender, RoutedEventArgs e) { GoToMenu(Menu.Game); Start(); }
@@ -227,49 +122,50 @@ namespace Darakombi
 
         private void GhostTitle_Click(object sender, RoutedEventArgs e)
         {
-            if (player == null) return;
-            bool isGhost = player.CollisionType == CollisionType.Ghost;
+            //if (Player == null) return;
+            bool isGhost = Player.CollisionType == CollisionType.Ghost;
             if (isGhost)
             {
-                player.CollisionType = CollisionType.Live;
+                Player.CollisionType = CollisionType.Live;
                 GhostBool.Content = "OFF";
                 GhostBool.Foreground = Brushes.IndianRed;
             }
             else
             {
-                player.CollisionType = CollisionType.Ghost;
+                Player.CollisionType = CollisionType.Ghost;
                 GhostBool.Content = "ON";
                 GhostBool.Foreground = Brushes.LightGreen;
             }
         }
         private void OverlayTitle_Click(object sender, RoutedEventArgs e)
         {
-            bool isShown = sceneManager.ShowOverlays;
+            //if(GameManager.Renderer == null) return;
+            bool isShown = GameManager.Renderer.ShowOverlays;
             if (isShown)
             {
-                sceneManager.ShowOverlays = false;
+                GameManager?.Renderer?.ShowOverlays = false;
                 OverlayBool.Content = "OFF";
                 OverlayBool.Foreground = Brushes.IndianRed;
             }
             else
             {
-                sceneManager.ShowOverlays = true;
+                GameManager?.Renderer?.ShowOverlays = true;
                 OverlayBool.Content = "ON";
                 OverlayBool.Foreground = Brushes.LightGreen;
             }
         }
         private void GridTitle_Click(object sender, RoutedEventArgs e)
         {
-            bool isShown = GameCellGrid.Visibility == Visibility.Visible;
+            bool isShown = GameManager?.SpatialCellGrid?.Visibility == Visibility.Visible;
             if (isShown)
             {
-                GameCellGrid.Visibility = Visibility.Hidden;
+                GameManager?.SpatialCellGrid?.Visibility = Visibility.Hidden;
                 GridBool.Content = "OFF";
                 GridBool.Foreground = Brushes.IndianRed;
             }
             else
             {
-                GameCellGrid.Visibility = Visibility.Visible;
+                GameManager?.SpatialCellGrid?.Visibility = Visibility.Visible;
                 GridBool.Content = "ON";
                 GridBool.Foreground = Brushes.LightGreen;
             }
@@ -278,10 +174,10 @@ namespace Darakombi
         private void EditorSave_Click(object sender, RoutedEventArgs e)
         {
             EditorQuitWarning.Visibility = Visibility.Hidden;
-            if (editor?.Tiles.Count > 0)
+            if (EditorManager.Editor?.Tiles.Count > 0)
             {
-                editor.Save("MapSave.txt", Map.Size);
-                editorSaved = true;
+                EditorManager?.Editor?.Save("MapSave.txt", Map.Size);
+                EditorManager?.Editor?.Saved = true;
             }
         }
         private void ChooseButton_Click(object sender, RoutedEventArgs e)
@@ -298,8 +194,8 @@ namespace Darakombi
             {
                 GoToMenu(Menu.Editor);
                 Start();
-                editor.Clear();
-                editor?.Load(dialog.FileName);
+                EditorManager.Editor?.Clear();
+                EditorManager.Editor?.Load(dialog.FileName);
             }
         }
 
@@ -351,7 +247,7 @@ namespace Darakombi
 
         private void DrawOverTitle_Click(object sender, RoutedEventArgs e)
         {
-            if (editor.DrawOver)
+            if (EditorManager.Editor.DrawOver)
             {
                 DrawOverBool.Content = "OFF";
                 DrawOverBool.Foreground = Brushes.IndianRed;
@@ -361,7 +257,23 @@ namespace Darakombi
                 DrawOverBool.Content = "ON";
                 DrawOverBool.Foreground = Brushes.LightGreen;
             }
-            editor.DrawOver = !editor.DrawOver;
+            EditorManager.Editor?.DrawOver = !EditorManager.Editor.DrawOver;
+        }
+        private void EditorGridTitle_Click(object sender, RoutedEventArgs e)
+        {
+            bool isShown = EditorManager.EditorGrid?.Visibility == Visibility.Visible;
+            if (isShown)
+            {
+                EditorManager.EditorGrid?.Visibility = Visibility.Hidden;
+                EditorGridBool.Content = "OFF";
+                EditorGridBool.Foreground = Brushes.IndianRed;
+            }
+            else
+            {
+                EditorManager.EditorGrid?.Visibility = Visibility.Visible;
+                EditorGridBool.Content = "ON";
+                EditorGridBool.Foreground = Brushes.LightGreen;
+            }
         }
 
         private void MapButton_Click(object sender, RoutedEventArgs e)
@@ -370,29 +282,11 @@ namespace Darakombi
             MapMenu.Visibility = Visibility.Visible;
             MapButton.Foreground = Brushes.White;
         }
-
         private void EditorDiscardButton_Click(object sender, RoutedEventArgs e)
         {
-            editor?.Clear();
+            EditorManager.Editor?.Clear();
             EditorQuitWarning.Visibility = Visibility.Hidden;
             GoToPreviousMenu();
-        }
-
-        private void EditorGridTitle_Click(object sender, RoutedEventArgs e)
-        {
-            bool isShown = EditorGrid.Visibility == Visibility.Visible;
-            if (isShown)
-            {
-                EditorGrid.Visibility = Visibility.Hidden;
-                EditorGridBool.Content = "OFF";
-                EditorGridBool.Foreground = Brushes.IndianRed;
-            }
-            else
-            {
-                EditorGrid.Visibility = Visibility.Visible;
-                EditorGridBool.Content = "ON";
-                EditorGridBool.Foreground = Brushes.LightGreen;
-            }
         }
 
         private void RedSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) => UpdateEditorColor();
@@ -419,7 +313,6 @@ namespace Darakombi
 
             MapWidthContent.Text = "12800";
             MapHeightContent.Text = "12800";
-            sceneManager = new(GameCanvas);
         }
 
         private void UpdateMenu()
@@ -479,10 +372,10 @@ namespace Darakombi
             switch (CurrentMenu)
             {
                 case Menu.Game:
-                    EndGame();
+                    //EndGame();
                     break;
                 case Menu.Editor:
-                    if (editor.Tiles.Count > 0 && !editorSaved)
+                    if (Editor.Tiles.Count > 0 && !EditorManager.Editor.Saved)
                     {
                         EditorQuitWarning.Visibility = Visibility.Visible;
                     }
@@ -490,17 +383,17 @@ namespace Darakombi
             }
         }
 
-        private Point ScreenToWorld(Point pos) =>
-            new(
-                (pos.X / CameraScale.ScaleX) - CameraTransform.X,
-                (pos.Y / CameraScale.ScaleY) - CameraTransform.Y);
+        private void AddElementToCanvas(UIElement element, int zIndex)
+        {
+            WorldCanvas.Children.Add(element);
+            Canvas.SetLeft(element, 0);
+            Canvas.SetTop(element, 0);
+            Panel.SetZIndex(element, zIndex);
+        }
         private void CreateMap(Size size)
         {
             Map = new(size);
-            GameCanvas.Children.Add(Map);
-            Canvas.SetLeft(Map, 0);
-            Canvas.SetTop(Map, 0);
-            Panel.SetZIndex(Map, 0);
+            AddElementToCanvas(Map, 0);
             MapButton.Foreground = Brushes.White;
         }
         private void ResizeMap(Size size)
@@ -516,258 +409,81 @@ namespace Darakombi
             else
                 CreateMap(size);
 
-            GameCellGrid?.Width = w;
-            GameCellGrid?.Height = h;
-            GameCellGrid?.Update();
+            GameManager?.SpatialCellGrid?.Width = w;
+            GameManager?.SpatialCellGrid?.Height = h;
+            GameManager?.SpatialCellGrid?.Update();
 
-            EditorGrid?.Width = w;
-            EditorGrid?.Height = h;
-            EditorGrid?.Update();
+            EditorManager.EditorGrid?.Width = w;
+            EditorManager.EditorGrid?.Height = h;
+            EditorManager.EditorGrid?.Update();
         }
 
         private void ClearArea(Rect area)
         {
-            var targets = grid.Search(area);
-            var toRemove = targets.Where(e => e.Entity is not Player);
+            var targets = SpatialGrid.Search(area);
+            var toRemove = targets.Where(e => e.Entity is not Darakombi.Player);
 
             foreach (var data in toRemove)
             {
-                sceneManager.Remove(data);
-                game.AllEntityData.Remove(data);
-                if (data.Entity is Rock rock) game.Rocks.Remove(rock);
-                game.spatialGrid.Remove(data);
+                GameManager?.Renderer?.Remove(data);
+                GameManager?.Game?.AllEntityData.Remove(data);
+                if (data.Entity is Rock rock) GameManager?.Game?.Rocks.Remove(rock);
+                GameManager?.Game?.SpatialGrid.Remove(data);
             }
         }
         private void ClearViewport()
         {
-            ClearArea(ViewportPlus);
+            ClearArea(Viewport);
         }
         private void ClearMap()
         {
-            foreach (var data in game.AllEntityData)
-                if (data.Entity is not Player)
-                    sceneManager.Remove(data);
+            foreach (var data in GameManager?.Game?.AllEntityData)
+                if (data.Entity is not Darakombi.Player)
+                    GameManager?.Renderer?.Remove(data);
 
-            game.Rocks.Clear();
-            game.Entities.RemoveAll(e => e is not Player);
-            game.AllEntityData.RemoveAll(e => e.Entity is not Player);
-            game.spatialGrid.ClearAll();
-            game.spatialGrid.Add(game.AllEntityData[0]);
-            sceneManager.ClearCache();
+            GameManager?.Game?.Rocks.Clear();
+            GameManager?.Game?.Entities.RemoveAll(e => e is not Darakombi.Player);
+            GameManager?.Game?.AllEntityData.RemoveAll(e => e.Entity is not Darakombi.Player);
+            GameManager?.Game?.SpatialGrid.ClearAll();
+            GameManager?.Game?.SpatialGrid.Add(GameManager?.Game?.AllEntityData[0]);
+            GameManager?.Renderer?.ClearCache();
             GC.Collect();
         }
 
         private void StartGame()
         {
-            game ??= new(Map);
-            game.spatialGrid ??= new(Map.Width, Map.Height);
-            game.AddPlayer();
-            GameCellGrid ??= new GridHelper(GameCellSize, (int)Map.Width, (int)Map.Height, Brushes.Green, 0.5);
-            GameCanvas.Children.Add(GameCellGrid);
-            Panel.SetZIndex(GameCellGrid, 10);
+            GameManager = new(Context, new(WorldCanvas));
+            GameManager.AddElementToCanvas += AddElementToCanvas;
+            GameManager.ClearViewport += ClearViewport;
+            GameManager.ClearViewport += ClearMap;
+            GameManager.Start();
         }
-        private void PlayerMovement(double dt)
-        {
-            var d = new Vector();
-
-            if (PressedKeys.Contains(Key.W)) d.Y -= 1;
-            if (PressedKeys.Contains(Key.A)) d.X -= 1;
-            if (PressedKeys.Contains(Key.S)) d.Y += 1;
-            if (PressedKeys.Contains(Key.D)) d.X += 1;
-
-            if (d.X != 0 || d.Y != 0) d.Normalize();
-            d.X *= player.Speed * dt;
-            d.Y *= player.Speed * dt;
-
-            Point pos = player.Pos;
-            Size size = player.Size;
-            Rect newRect;
-
-            double gap = 1e-10;
-            double leftEdge = Map.Thickness;
-            double topEdge = Map.Thickness;
-            double rightEdge = Map.Width - Map.Thickness - player.Width;
-            double bottomEdge = Map.Height - Map.Thickness - player.Height;
-
-            Rect searchArea = player.Rect;
-            searchArea.Inflate(player.Speed * dt + 10, player.Speed * dt + 10);
-            var colliders = grid.Search(searchArea);
-
-            pos.X += d.X;
-            newRect = new Rect(pos, size);
-            foreach (var collider in colliders.Where(c => c.Entity.CollisionType != CollisionType.Live))
-            {
-                if (player.CollisionType == CollisionType.Ghost) break;
-                if (newRect.IntersectsWith(collider.Rect))
-                {
-                    if (d.X > 0)
-                        pos.X = collider.Pos.X - player.Width - gap;
-                    else if (d.X < 0)
-                        pos.X = collider.Pos.X + collider.Width + gap;
-                    newRect = new Rect(pos, size);
-                }
-            }
-
-            pos.Y += d.Y;
-            newRect = new Rect(pos, size);
-            foreach (var collider in colliders.Where(c => c.Entity.CollisionType != CollisionType.Live))
-            {
-                if (player.CollisionType == CollisionType.Ghost) break;
-                if (newRect.IntersectsWith(collider.Rect))
-                {
-                    if (d.Y > 0)
-                        pos.Y = collider.Pos.Y - player.Height - gap;
-                    else if (d.Y < 0)
-                        pos.Y = collider.Pos.Y + collider.Height + gap;
-                    newRect = new Rect(pos, size);
-                }
-            }
-
-            pos.X = Math.Max(leftEdge, Math.Min(pos.X, rightEdge));
-            pos.Y = Math.Max(topEdge, Math.Min(pos.Y, bottomEdge));
-
-            Debug.Assert(
-                !double.IsNaN(pos.X)
-             && !double.IsNaN(pos.Y));
-
-            player.Pos = pos;
-
-            DebugHelper.DeltaX = d.X;
-            DebugHelper.DeltaY = d.Y;
-            DebugHelper.VelocityX = d.X * 1 / dt;
-            DebugHelper.VelocityY = d.Y * 1 / dt;
-        }
-        private void GameCameraUpdate()
-        {
-            double px = player.Pos.X + player.Width / 2;
-            double py = player.Pos.Y + player.Height / 2;
-
-            double screenCenterX = ActualWidth / 2;
-            double screenCenterY = ActualHeight / 2;
-
-            double offsetX = screenCenterX - px;
-            double offsetY = screenCenterY - py;
-
-            offsetX = Math.Min(0, Math.Max(offsetX, ActualWidth - game.Map.Width));
-            offsetY = Math.Min(0, Math.Max(offsetY, ActualHeight - game.Map.Height));
-
-            CameraTransform.X = offsetX;
-            CameraTransform.Y = offsetY;
-
-            DebugHelper.PlayerX = px;
-            DebugHelper.PlayerY = py;
-        }
-        private void GameMove(double dt)
-        {
-            PlayerMovement(dt);
-            GameCameraUpdate();
-            foreach (var enemy in game.Enemies) //cull later
-                game.EnemyAI(enemy, dt);
-        }
-        private void GameShortcuts()
-        {
-            if (PressedKeys.Remove(Key.R))
-                game.AddTestRock();
-            if (PressedKeys.Remove(Key.G))
-                game.PopulateMap<Rock>(2000);
-            if (PressedKeys.Remove(Key.V))
-                ClearViewport();
-            if (PressedKeys.Remove(Key.M))
-                ClearMap();
-            if (PressedKeys.Remove(Key.E))
-                game.AddTestEnemy();
-        }
-        private void GameDebug()
-        {
-            entityCounter.AppendLine("Entities:");
-            entityCounter.AppendLine($"rocks:{game.Rocks.Count}");
-            entityCounter.AppendLine($"enemies:{game.Enemies.Count}");
-            EntityCounter.Text = entityCounter.ToString();
-            DebugText.Text = new StringBuilder(DebugHelper.GetGameEvent() + '\n' + DebugHelper.GetGameDynamic()).ToString();
-        }
-        private void GameUpdate(double dt)
-        {
-            entityCounter.Clear();
-            GameShortcuts();
-            GameMove(dt);
-            foreach (var entityData in game.LiveEntities)
-                grid.Update(entityData);
-            GameDebug();
-        }
-        private void EndGame()
-        {
-            CompositionTarget.Rendering -= OnRender;
-        }
-
         private void StartEditor()
         {
-            editor ??= new(EditorCellSize);
-            editor.ResizeMap += ResizeMap;
-            GameCanvas.Children.Add(editor);
-            Canvas.SetLeft(editor, 0);
-            Canvas.SetTop(editor, 0);
-            Panel.SetZIndex(editor, 20);
-
-            EditorGrid ??= new GridHelper(EditorCellSize, (int)Map.Width, (int)Map.Height, Brushes.White, 0.05);
-            GameCanvas.Children.Add(EditorGrid);
-            Panel.SetZIndex(EditorGrid, 10);
-
-            ResetEditorCam();
+            EditorManager = new(Context, GameCanvas);
+            EditorManager.AddElementToCanvas += AddElementToCanvas;
+            EditorManager.ResizeMap += ResizeMap;
+            EditorManager.Start();
         }
-        private void EditorMove(double dt)
-        {
-            double pan = 1000 * dt;
-            if (PressedKeys.Contains(Key.W) || PressedKeys.Contains(Key.Up)) { CameraTransform.Y += pan; editorUpdate = true; }
-            if (PressedKeys.Contains(Key.A) || PressedKeys.Contains(Key.Left)) { CameraTransform.X += pan; editorUpdate = true; }
-            if (PressedKeys.Contains(Key.D) || PressedKeys.Contains(Key.Right)) { CameraTransform.X -= pan; editorUpdate = true; }
-            if (PressedKeys.Contains(Key.S) || PressedKeys.Contains(Key.Down)) { CameraTransform.Y -= pan; editorUpdate = true; }
-        }
-        private void EditorDrawTile(Point worldPos)
-        {
-            int cellX = (int)Math.Floor(worldPos.X / EditorCellSize) * EditorCellSize;
-            int cellY = (int)Math.Floor(worldPos.Y / EditorCellSize) * EditorCellSize;
-
-            var tile = new Editor.Tile((cellX, cellY), RedSliderText.Foreground);
-            editor.Add(tile);
-
-            editorUpdate = true;
-            QOL.D($"Placed block at {cellX}, {cellY}");
-        }
-        private void ResetEditorCam()
-        {
-            CameraScale.ScaleX = CameraScale.ScaleY = 0.5;
-            CameraTransform.X = CameraTransform.X / CameraScale.ScaleX - Map.Center.X + ActualWidth / 2;
-            CameraTransform.Y = CameraTransform.Y / CameraScale.ScaleY - Map.Center.Y + ActualHeight / 2;
-        }
-        private void EditorDebug()
-        {
-            DebugHelper.MousePosX = ActiveMousePos.X;
-            DebugHelper.MousePosY = ActiveMousePos.Y;
-            DebugHelper.CameraX = CameraCenter.X;
-            DebugHelper.CameraY = CameraCenter.Y;
-            DebugText.Text = DebugHelper.GetEditorEvent();
-        }
-        private void EditorUpdate(double dt)
-        {
-            EditorMove(dt);
-            if (editorUpdate)
-            {
-                editor.Update(ViewportPlus);
-                EditorDebug();
-                editorUpdate = false;
-            }
-        }
-
         private void Start()
         {
             GameCanvas.Visibility = Visibility.Visible;
             if (Map == null) CreateMap(DefaultMapSize);
+            Context ??= new()
+            {
+                Viewport = Viewport,
+                Map = Map,
+                PressedKeys = PressedKeys,
+                ScaleTransform = CameraScale,
+                TranslateTransform = CameraTransform
+            };
 
             if (CurrentMenu == Menu.Game) StartGame();
             else if (CurrentMenu == Menu.Editor) StartEditor();
 
             CompositionTarget.Rendering += OnRender;
         }
+
         private double CurrentFrame()
         {
             double now = Uptime.Elapsed.TotalSeconds;
@@ -778,15 +494,17 @@ namespace Darakombi
         }
         private void Update(double dt)
         {
-            dynamicDebugInfo.Clear();
-            eventDebugInfo.Clear();
-            if (CurrentMenu == Menu.Game)
+            switch (CurrentMenu) // switch to Current later
             {
-                GameUpdate(dt);
-                sceneManager.UpdateGame(game.spatialGrid.Search(ViewportPlus));
+                case Menu.Game:
+                    GameManager.Update(dt, Viewport);
+                    DebugText.Text = $"{GameManager.EventDebug}\n{GameManager.DynamicDebug}";
+                    break;
+                case Menu.Editor:
+                    EditorManager.Update(dt, Viewport);
+                    DebugText.Text = EditorManager.EventDebug.ToString();
+                    break;
             }
-            if (CurrentMenu == Menu.Editor)
-                EditorUpdate(dt);
             GlobalDebug(dt);
         }
         private void GlobalDebug(double dt)
@@ -795,7 +513,6 @@ namespace Darakombi
             DebugHelper.DeltaTime = dt;
             DebugGlobalText.Text = DebugHelper.GetApp();
         }
-
         private void OnRender(object sender, EventArgs e) => Update(CurrentFrame());
 
         private void Escape()

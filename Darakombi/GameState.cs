@@ -3,7 +3,7 @@
     public class GameState
     {
         public Map Map;
-        public SpatialGrid spatialGrid;
+        public SpatialGrid SpatialGrid;
 
         public List<Entity> Entities { get; } = [];
         public List<EntityData> AllEntityData { get; } = [];
@@ -19,7 +19,7 @@
         public GameState(Map map)
         {
             Map = map;
-            spatialGrid = new(map.Width, map.Height);
+            SpatialGrid = new(map.Width, map.Height);
         }
 
         public void AddPlayer()
@@ -49,7 +49,7 @@
         public bool InsideMap(Rect rect) => Map.RectInside(rect);
         public bool Colliding(Entity entity)
         {
-            foreach (var data in spatialGrid.Search(entity.Rect))
+            foreach (var data in SpatialGrid.Search(entity.Rect))
                 if (data.Entity != entity
                     && data.Entity.CanCollide
                     && data.Rect.IntersectsWith(entity.Rect))
@@ -133,7 +133,7 @@
             EntityData data = new(entity);
             AllEntityData.Add(data);
             if (entity.CollisionType == CollisionType.Live) LiveEntities.Add(data);
-            spatialGrid.Add(data);
+            SpatialGrid.Add(data);
 
             if (entity is Enemy enemy) Enemies.Add(enemy);
             if (entity is Rock rock) Rocks.Add(rock);

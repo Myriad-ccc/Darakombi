@@ -66,7 +66,7 @@
                         <TextBlock
                             FontSize="48"
                             Foreground="#4CDAE4"
-                            Text="≡"/>
+                            Text="≡" />
                     </Viewbox>
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
@@ -117,17 +117,22 @@
 
             <Canvas
                 x:Name="GameCanvas"
+                Background="Transparent"
                 MouseDown="GameCanvas_MouseDown"
                 MouseMove="GameCanvas_MouseMove"
                 MouseUp="GameCanvas_MouseUp"
                 MouseWheel="GameCanvas_MouseWheel"
                 Visibility="Hidden">
-                <Canvas.RenderTransform>
-                    <TransformGroup>
-                        <TranslateTransform x:Name="CameraTransform" X="0" Y="0" />
-                        <ScaleTransform x:Name="CameraScale" ScaleX="1" ScaleY="1" />
-                    </TransformGroup>
-                </Canvas.RenderTransform>
+                
+                <Canvas x:Name="WorldCanvas">
+                    <Canvas.RenderTransform>
+                        <TransformGroup>
+                            <TranslateTransform x:Name="CameraTransform" X="0" Y="0" />
+                            <ScaleTransform x:Name="CameraScale" ScaleX="1" ScaleY="1" />
+                        </TransformGroup>
+                    </Canvas.RenderTransform>
+                </Canvas>
+                
             </Canvas>
 
             <Grid x:Name="StartMenu" Visibility="Visible">

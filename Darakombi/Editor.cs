@@ -15,6 +15,7 @@ namespace Darakombi
         public Rect Viewport;
 
         public bool DrawOver { get; set; } = false;
+        public bool Saved { get; set; } = false;
 
         public Editor(int cellSize)
         {

@@ -21,6 +21,14 @@ namespace Darakombi
             BorderThickness = new(0);
         }
 
+        public bool RectInside(Point pos)
+        {
+            return pos.X >= Thickness
+                && pos.X <= Width - Thickness
+                && pos.Y >= Thickness
+                && pos.Y <= Height - Thickness;
+        }
+
         public bool RectInside(Rect rect)
         {
             return rect.Left >= Thickness

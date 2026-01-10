@@ -2,7 +2,7 @@
 
 namespace Darakombi
 {
-    public class SceneManager
+    public class Renderer
     {
         private readonly Canvas Canvas;
 
@@ -15,20 +15,20 @@ namespace Darakombi
 
         public bool ShowOverlays { get; set; } = true;
 
-        public SceneManager(Canvas canvas)
+        public Renderer(Canvas canvas)
         {
             Canvas = canvas;
         }
 
-        public void UpdateGame(IEnumerable<EntityData> viewportEntities)
+        public void RenderEntities(IEnumerable<EntityData> viewportEntities)
         {
             Visible.Clear();
             ToRemove.Clear();
 
             foreach (var data in viewportEntities)
             {
-                UpdateVisual(data);
-                UpdateOverlay(data);
+                RenderVisual(data);
+                RenderOverlay(data);
             }
 
             foreach (var data in Rendered.Where(e => !Visible.Contains(e)))
@@ -40,16 +40,16 @@ namespace Darakombi
             }
         }
 
-        private void UpdateVisual(EntityData data)
+        private void RenderVisual(EntityData data)
         {
             Visible.Add(data);
             if (Rendered.Add(data))
                 Add(data);
-            Canvas.SetLeft(data.Entity.Visual, data.X); //null error
+            Canvas.SetLeft(data.Entity.Visual, data.X);
             Canvas.SetTop(data.Entity.Visual, data.Y);
         }
 
-        private void UpdateOverlay(EntityData data)
+        private void RenderOverlay(EntityData data)
         {
             var e = data.Entity;
             if (e.HasOverlay)
