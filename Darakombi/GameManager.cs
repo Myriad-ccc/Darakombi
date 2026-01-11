@@ -3,6 +3,8 @@
     public class GameManager : IManager
     {
         public GlobalContext Context { get; set; }
+        public UIElement HUD { get; set; }
+
         public GameState Game;
         public Renderer Renderer;
 
@@ -15,6 +17,8 @@
         public Rect Viewport => Context.Viewport;
         public Map Map => Context.Map;
         public ScaleTransform ScaleTransform => Context.ScaleTransform;
+        public SkewTransform SkewTransform => Context.SkewTransform;
+        public RotateTransform RotateTransform => Context.RotateTransform;
         public TranslateTransform TranslateTransform => Context.TranslateTransform;
         public HashSet<Key> PressedKeys => Context.PressedKeys;
 
@@ -22,17 +26,16 @@
         public Action ClearViewport;
         public Action ClearMap;
 
-        public StringBuilder DynamicDebug { get; set; } = new();
-        public StringBuilder EventDebug { get; set; } = new();
+        public StringBuilder DynamicDebug { get; init; } = new();
+        public StringBuilder EventDebug { get; init; } = new();
+        public StringBuilder StaticDebug { get; init; } = new();
+        public StringBuilder ModeDebug { get; set; } = new();
 
-        public GameManager(GlobalContext context, Renderer renderer)
-        {
-            Context = context;
-            Renderer = renderer;
-        }
+        public GameManager(Renderer renderer) => Renderer = renderer;
 
         public void Start()
         {
+            HUD?.Visibility = Visibility.Visible;
             Game ??= new(Map);
             Game.SpatialGrid ??= new(Map.Width, Map.Height);
             Game.AddPlayer();
@@ -105,8 +108,6 @@
 
             Player.Pos = pos;
 
-            DebugHelper.DeltaX = d.X;
-            DebugHelper.DeltaY = d.Y;
             DebugHelper.VelocityX = d.X * 1 / dt;
             DebugHelper.VelocityY = d.Y * 1 / dt;
 
@@ -156,12 +157,17 @@
             DynamicDebug.Append(DebugHelper.GetGameDynamic());
             EventDebug.Clear();
             EventDebug.Append(DebugHelper.GetGameEvent());
+            var dyn = DynamicDebug.Length == 0 ? null : DynamicDebug + "\n";
+            var ev = EventDebug.Length == 0 ? null : EventDebug + "\n";
+            var st = StaticDebug.Length == 0 ? null : StaticDebug + "\0";
+            ModeDebug = new StringBuilder($"{dyn}{ev}{st}");
         }
 
         public void Update(double dt, Rect viewport)
         {
             Context.Viewport = new(-TranslateTransform.X, -TranslateTransform.Y, viewport.Width, viewport.Height);
             DynamicDebug.Clear();
+            ModeDebug.Clear();
             //entityCounter.Clear();
             Move(dt);
             CameraUpdate();
@@ -175,6 +181,11 @@
         public void Stop()
         {
 
+        }
+
+        public void End()
+        {
+            HUD?.Visibility = Visibility.Hidden;
         }
     }
 }

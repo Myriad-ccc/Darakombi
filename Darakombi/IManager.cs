@@ -2,14 +2,17 @@
 {
     public interface IManager
     {
-        GlobalContext Context { get; internal set; }
+        public GlobalContext Context { get; set; }
+        public UIElement HUD { get; set; }
 
         void Start();
-        void Move(double dt);
         void Update(double dt, Rect viewport);
         void Stop();
+        void End();
 
-        public StringBuilder DynamicDebug { get; set; }
-        public StringBuilder EventDebug { get; set; }
+        StringBuilder DynamicDebug { get; init; }
+        StringBuilder EventDebug { get; init; }
+        StringBuilder StaticDebug { get; init; }
+        public StringBuilder ModeDebug { get; set; }
     }
 }

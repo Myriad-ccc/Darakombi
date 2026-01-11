@@ -61,9 +61,17 @@ namespace Darakombi
 
         public static void D(object obj, bool dateTime = true) => Debug.WriteLine(dateTime ? $"[{DateTime.Now}] " + $"{obj}" : $"{obj}");
 
-        public static Point ScreenToWorld(Point screenPos, TranslateTransform translate, ScaleTransform scale) =>
+        public static Point ScreenToWorld(Point screenPos, ScaleTransform scale, TranslateTransform translate) =>
             new(
-                (screenPos.X / scale.ScaleX) - translate.X,
-                (screenPos.Y / scale.ScaleY) - translate.Y);
+                (screenPos.X - translate.X) / scale.ScaleX,
+                (screenPos.Y - translate.Y) / scale.ScaleY);
+
+        public static bool IsPointOverElement(MouseButtonEventArgs e, FrameworkElement element)
+        {
+            var mousePos = e.GetPosition(element);
+            return mousePos.X >= 0 && mousePos.X <= (element.ActualWidth == 0 ? element.Width : element.ActualWidth)
+                && mousePos.Y >= 0 && mousePos.Y <= (element.ActualHeight == 0 ? element.Height : element.ActualHeight);
+        }
+
     }
 }

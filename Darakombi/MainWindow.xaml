@@ -31,23 +31,33 @@
             x:Name="TitleBar"
             Grid.Row="0"
             Background="#323232"
-            MouseDown="TitleBar_MouseDown">
+            MouseDown="TitleBar_MouseDown"
+            MouseMove="TitleBar_MouseMove"
+            MouseUp="TitleBar_MouseUp">
             <TextBlock
                 x:Name="TitleTextShadow"
                 Padding="5,5,0,0"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top"
                 FontSize="40"
-                MouseDown="TitleText_MouseDown"
                 Text="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}" />
-            <TextBlock
-                x:Name="TitleText"
-                Padding="6,6,0,0"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Top"
-                FontSize="40"
-                MouseDown="TitleText_MouseDown"
-                Text="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}" />
+            <StackPanel Orientation="Horizontal">
+                <TextBlock
+                    x:Name="TitleText"
+                    Padding="6,6,0,0"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    FontSize="40"
+                    Text="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}" />
+
+                <TextBlock
+                    x:Name="RuntimeDebugText"
+                    VerticalAlignment="Center"
+                    Padding="20,0,0,0"
+                    FontSize="32"
+                    Foreground="White"
+                 />
+            </StackPanel>
 
             <StackPanel
                 HorizontalAlignment="Right"
@@ -56,57 +66,68 @@
 
                 <Button
                     x:Name="EscapeButtonMenu"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Top"
+                    Width="64"
+                    Height="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=Grid}}"
                     Background="Transparent"
-                    BorderThickness="2"
+                    BorderThickness="0"
                     Click="EscapeButtonMenu_Click"
-                    FontSize="48">
-                    <Viewbox Width="48" Height="48">
-                        <TextBlock
-                            FontSize="48"
-                            Foreground="#4CDAE4"
-                            Text="≡" />
-                    </Viewbox>
+                    Foreground="#4CDAE4">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
                             <Border
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                x:Name="EscapeButtonBorder"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Stretch"
+                                Background="{TemplateBinding Background}">
+                                <TextBlock
+                                    x:Name="EscapeButtonText"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    FontSize="42"
+                                    Text="☰" />
                             </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="EscapeButtonBorder" Property="Background" Value="#4CDAE4" />
+                                    <Setter TargetName="EscapeButtonText" Property="Foreground" Value="White" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </Button.Template>
                 </Button>
 
                 <Button
                     x:Name="ClosingButton"
-                    Margin="2,0,0,0"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Top"
+                    Width="64"
+                    Height="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=Grid}}"
                     Background="Transparent"
-                    BorderThickness="2"
+                    BorderThickness="0"
                     Click="ClosingButton_Click"
-                    FontSize="48">
-                    <Viewbox Width="48" Height="48">
-                        <TextBlock
-                            FontSize="48"
-                            Foreground="#b3251b"
-                            Text="X"
-                            TextAlignment="Center" />
-                    </Viewbox>
+                    Foreground="#b3251b">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
                             <Border
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                x:Name="ClosingButtonBorder"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Stretch"
+                                Background="{TemplateBinding Background}">
+                                <TextBlock
+                                    x:Name="ClosingButtonText"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    FontSize="30"
+                                    Text="✖" />
                             </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="ClosingButtonBorder" Property="Background" Value="#b3251b" />
+                                    <Setter TargetName="ClosingButtonText" Property="Foreground" Value="White" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </Button.Template>
                 </Button>
+
             </StackPanel>
         </Grid>
 
@@ -123,16 +144,18 @@
                 MouseUp="GameCanvas_MouseUp"
                 MouseWheel="GameCanvas_MouseWheel"
                 Visibility="Hidden">
-                
+
                 <Canvas x:Name="WorldCanvas">
                     <Canvas.RenderTransform>
                         <TransformGroup>
-                            <TranslateTransform x:Name="CameraTransform" X="0" Y="0" />
                             <ScaleTransform x:Name="CameraScale" ScaleX="1" ScaleY="1" />
+                            <SkewTransform x:Name="CameraSkew" AngleX="0" AngleY="0" />
+                            <RotateTransform x:Name="CameraRotate" CenterX="0" CenterY="0" />
+                            <TranslateTransform x:Name="CameraTransform" X="0" Y="0" />
                         </TransformGroup>
                     </Canvas.RenderTransform>
                 </Canvas>
-                
+
             </Canvas>
 
             <Grid x:Name="StartMenu" Visibility="Visible">
@@ -497,7 +520,6 @@
                                     Maximum="255"
                                     Minimum="0"
                                     SmallChange="1"
-                                    ValueChanged="RedSlider_ValueChanged"
                                     Value="255" />
 
                                 <TextBlock
@@ -522,7 +544,6 @@
                                     Maximum="255"
                                     Minimum="0"
                                     SmallChange="1"
-                                    ValueChanged="GreenSlider_ValueChanged"
                                     Value="255" />
 
                                 <TextBlock
@@ -547,7 +568,6 @@
                                     Maximum="255"
                                     Minimum="0"
                                     SmallChange="1"
-                                    ValueChanged="BlueSlider_ValueChanged"
                                     Value="255" />
 
                                 <TextBlock
@@ -632,10 +652,6 @@
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top"
                 Orientation="Vertical">
-                <TextBlock
-                    x:Name="DebugGlobalText"
-                    FontSize="32"
-                    Foreground="White" />
                 <TextBlock
                     x:Name="DebugText"
                     FontSize="32"
