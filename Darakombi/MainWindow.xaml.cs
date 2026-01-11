@@ -13,10 +13,12 @@ namespace Darakombi
     public partial class MainWindow : Window
     {
         private readonly Stopwatch Uptime = Stopwatch.StartNew();
-        private double lastTime;
+        private double lastFrame;
+        private bool Paused = false;
 
-        private bool WindowDragging = false;
+        private bool WindowDragging;
         private Point WindowDragOffset;
+        private readonly HashSet<Key> PressedKeys = [];
 
         private Rect Viewport
         {
@@ -40,8 +42,6 @@ namespace Darakombi
         private GameManager GameManager;
         private EditorManager EditorManager;
         private IManager CurrentMode;
-
-        private readonly HashSet<Key> PressedKeys = [];
 
         private Map Map;
         private readonly Size DefaultMapSize = new(12800, 12800);
@@ -98,21 +98,31 @@ namespace Darakombi
                 Top = currentMousePos.Y - WindowDragOffset.Y;
             }
         }
-        private void EscapeButtonMenu_Click(object sender, RoutedEventArgs e) => Escape();
+        private void EscapeMenuButton_Click(object sender, RoutedEventArgs e) => Escape();
         private void ClosingButton_Click(object sender, RoutedEventArgs e) => Application.Current.Shutdown();
 
-        private HashSet<Key> IgnoredKeys = [Key.LeftAlt, Key.RightAlt, Key.Tab, Key.Capital];
+        private HashSet<Key> IgnoredKeys = [Key.LeftAlt, Key.RightAlt, Key.Tab, Key.Capital, Key.LWin, Key.RWin];
+        private Key GetRealKey(KeyEventArgs e) => (e.Key == Key.System) ? e.SystemKey : e.Key;
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            if (IgnoredKeys.Contains(e.Key))
+            var key = GetRealKey(e);
+            if (IgnoredKeys.Contains(key))
                 e.Handled = true;
         }
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
-            if (!e.IsRepeat)
-                PressedKeys.Add(e.Key);
+            var key = GetRealKey(e);
+            if (IgnoredKeys.Contains(key)) return;
+            if (!e.IsRepeat) PressedKeys.Add(key);
+
+            if (PressedKeys.Contains(Key.Escape)) Escape();
         }
-        private void Window_KeyUp(object sender, KeyEventArgs e) => PressedKeys.Remove(e.Key);
+        private void Window_KeyUp(object sender, KeyEventArgs e)
+        {
+            var key = GetRealKey(e);
+            if (IgnoredKeys.Contains(key)) return;
+            PressedKeys.Remove(key);
+        }
 
         private void GameCanvas_MouseDown(object sender, MouseButtonEventArgs e)
         {
@@ -286,6 +296,21 @@ namespace Darakombi
                 EditorGridBool.Foreground = Brushes.LightGreen;
             }
         }
+        private void EditorChunkGridTitle_Click(object sender, RoutedEventArgs e)
+        {
+            if (EditorManager?.ChunkGrid?.Visibility == Visibility.Visible)
+            {
+                EditorManager?.ChunkGrid?.Visibility = Visibility.Hidden;
+                EditorChunkGridBool.Foreground = Brushes.IndianRed;
+                EditorChunkGridBool.Content = "OFF";
+            }
+            else
+            {
+                EditorManager?.ChunkGrid?.Visibility = Visibility.Visible;
+                EditorChunkGridBool.Foreground = Brushes.LightGreen;
+                EditorChunkGridBool.Content = "ON";
+            }
+        }
 
         private void MapButton_Click(object sender, RoutedEventArgs e)
         {
@@ -393,7 +418,7 @@ namespace Darakombi
         {
             InitializeComponent();
 
-            lastTime = Uptime.Elapsed.TotalSeconds;
+            lastFrame = Uptime.Elapsed.TotalSeconds;
 
             TitleText.Foreground = QOL.RandomColor();
             TitleTextShadow.Foreground = QOL.RandomColor();
@@ -437,47 +462,43 @@ namespace Darakombi
         }
         private void UpdateMode(double dt)
         {
+            TopKeys.Text = string.Join(',', PressedKeys.Take(4));
             if (CurrentMode != null)
             {
                 CurrentMode.Update(dt, Viewport);
                 DebugText.Text = CurrentMode.ModeDebug.ToString();
             }
-            Runtime(dt);
-        }
-
-        private void StopMode()
-        {
-            if (CurrentMode == null) return;
-            CurrentMode.Stop();
-        }
+            RuntimeDebugText.Text = new StringBuilder($"upt:{Uptime.Elapsed:mm\\:ss}|fps:{QOL.GetAverageFPS(dt):F0}").ToString();
+        }   
         private void EndMode()
         {
             if (CurrentMode == null) return;
             CurrentMode.End();
         }
 
-        private void Runtime(double dt)
-        {
-            DebugHelper.Uptime = Uptime.Elapsed;
-            DebugHelper.FramesPerSecond = QOL.GetAverageFPS(dt);
-            DebugHelper.DeltaTime = dt;
-            //sb.AppendLine($"upt:{Uptime:hh\\:mm\\:ss}");
-            //sb.AppendLine($"fps:{FramesPerSecond:F0}");
-            //sb.Append($"dt:{DeltaTime:F3}");
-            RuntimeDebugText.Text = new StringBuilder($"upt:{Uptime.Elapsed:hh\\:mm\\:ss}|fps:{QOL.GetAverageFPS(dt):F0}|dt:{dt:F3}").ToString();
-        }
         private double CurrentFrame()
         {
             double now = Uptime.Elapsed.TotalSeconds;
-            double dt = Math.Min(now - lastTime, 0.05);
-            lastTime = now;
+            double dt = Math.Min(now - lastFrame, 0.05);
+            lastFrame = now;
             return dt;
         }
         private void OnRender(object sender, EventArgs e) => UpdateMode(CurrentFrame());
 
+        private void Toggle() => CurrentMode.Paused = Paused = !Paused;
+
         private void Escape()
         {
+            if (CurrentMode == null) return;
+            Toggle();
+            EscapeMenu.Visibility = Paused ? Visibility.Visible : Visibility.Hidden;
+        }
 
+        private void DebugMenuButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (CurrentMode == null) return;
+            Toggle();
+            //DebugMenuButton.Visibility = Paused ? Visibility.Visible : Visibility.Hidden;
         }
     }
 }

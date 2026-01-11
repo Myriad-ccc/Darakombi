@@ -4,6 +4,7 @@
     {
         public GlobalContext Context { get; set; }
         public UIElement HUD { get; set; }
+        public bool Paused { get; set; }
 
         public GameState Game;
         public Renderer Renderer;
@@ -165,6 +166,7 @@
 
         public void Update(double dt, Rect viewport)
         {
+            if (Paused) return;
             Context.Viewport = new(-TranslateTransform.X, -TranslateTransform.Y, viewport.Width, viewport.Height);
             DynamicDebug.Clear();
             ModeDebug.Clear();
@@ -176,11 +178,6 @@
             Renderer.RenderEntities(SpatialGrid.Search(Viewport));
             KeyDo();
             Debug();
-        }
-
-        public void Stop()
-        {
-
         }
 
         public void End()

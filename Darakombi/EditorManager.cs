@@ -1,14 +1,19 @@
-﻿namespace Darakombi
+﻿using System.Data.Common;
+
+namespace Darakombi
 {
     public class EditorManager : IManager
     {
         public GlobalContext Context { get; set; }
         public UIElement HUD { get; set; }
+        public bool Paused { get; set; }
 
         public Editor Editor;
 
         public GridHelper EditorGrid;
         private const int EditorCellSize = 64;
+        public GridHelper ChunkGrid;
+        private const int ChunkSize = 512;
 
         private bool DraggingCamera;
         private Point LastMousePos;
@@ -41,11 +46,13 @@
         public void Start()
         {
             HUD?.Visibility = Visibility.Visible;
-            Editor ??= new(EditorCellSize);
+            Editor ??= new(EditorCellSize, ChunkSize);
             Editor.ResizeMap += size => ResizeMap?.Invoke(size);
             EditorGrid ??= new GridHelper(EditorCellSize, (int)Map.Width, (int)Map.Height, Brushes.White, 0.1);
             AddElementToCanvas?.Invoke(Editor, 20);
             AddElementToCanvas?.Invoke(EditorGrid, 10);
+            ChunkGrid ??= new GridHelper(ChunkSize, (int)Map.Width, (int)Map.Height, Brushes.White, 0.5);
+            AddElementToCanvas?.Invoke(ChunkGrid, 20);
             ResetCam();
         }
 
@@ -98,16 +105,13 @@
 
         public void Update(double dt, Rect viewport)
         {
+            if (Paused) return;
             Context.Viewport = new(-TranslateTransform.X, -TranslateTransform.Y, viewport.Width, viewport.Height);
             ModeDebug.Clear();
-            if (Editor.NeedsRedraw) Editor.InvalidateVisual();
+            if (Editor.BufferTiles.Count > 0)
+                Editor.InvalidateVisual();
             KeyFunctions(dt);
             DebugAdd();
-        }
-
-        public void Stop()
-        {
-
         }
 
         public void End()
@@ -246,9 +250,9 @@
                     )
                 * ScaleTransform.ScaleX;
 
-            TranslateTransform.Y = -Math.Max(-Map.Height * 0.255, 
-                Math.Min(-TranslateTransform.Y / ScaleTransform.ScaleY, 
-                Math.Max(-Map.Height * 0.255, Map.Height * 1.255 - Viewport.Height))) 
+            TranslateTransform.Y = -Math.Max(-Map.Height * 0.255,
+                Math.Min(-TranslateTransform.Y / ScaleTransform.ScaleY,
+                Math.Max(-Map.Height * 0.255, Map.Height * 1.255 - Viewport.Height)))
                 * ScaleTransform.ScaleY;
         }
     }

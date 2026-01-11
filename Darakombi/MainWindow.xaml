@@ -21,6 +21,37 @@
     WindowStartupLocation="CenterScreen"
     WindowStyle="None"
     mc:Ignorable="d">
+
+    <Window.Resources>
+
+        <Style x:Key="MenuButtonStyle" TargetType="Button">
+            <Setter Property="Tag" Value="#000000" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border
+                            x:Name="ButtonBorder"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ButtonBorder" Property="Background" Value="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Tag}" />
+                                <Setter Property="Foreground" Value="White" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+    </Window.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="48" />
@@ -52,11 +83,17 @@
 
                 <TextBlock
                     x:Name="RuntimeDebugText"
-                    VerticalAlignment="Center"
                     Padding="20,0,0,0"
+                    VerticalAlignment="Center"
                     FontSize="32"
-                    Foreground="White"
-                 />
+                    Foreground="White" />
+
+                <TextBlock
+                    x:Name="TopKeys"
+                    Padding="20,0,0,0"
+                    VerticalAlignment="Center"
+                    FontSize="20"
+                    Foreground="DarkGoldenrod" />
             </StackPanel>
 
             <StackPanel
@@ -65,36 +102,24 @@
                 Orientation="Horizontal">
 
                 <Button
-                    x:Name="EscapeButtonMenu"
+                    x:Name="DebugMenuButton"
                     Width="64"
                     Height="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=Grid}}"
-                    Background="Transparent"
-                    BorderThickness="0"
-                    Click="EscapeButtonMenu_Click"
-                    Foreground="#4CDAE4">
-                    <Button.Template>
-                        <ControlTemplate TargetType="Button">
-                            <Border
-                                x:Name="EscapeButtonBorder"
-                                HorizontalAlignment="Stretch"
-                                VerticalAlignment="Stretch"
-                                Background="{TemplateBinding Background}">
-                                <TextBlock
-                                    x:Name="EscapeButtonText"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    FontSize="42"
-                                    Text="☰" />
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="EscapeButtonBorder" Property="Background" Value="#4CDAE4" />
-                                    <Setter TargetName="EscapeButtonText" Property="Foreground" Value="White" />
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Button.Template>
-                </Button>
+                    Click="DebugMenuButton_Click"
+                    Content="⚙"
+                    FontSize="32"
+                    Style="{StaticResource MenuButtonStyle}"
+                    Tag="#44B73E" />
+
+                <Button
+                    x:Name="EscapeMenuButton"
+                    Width="64"
+                    Height="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=Grid}}"
+                    Click="EscapeMenuButton_Click"
+                    Content="☰"
+                    FontSize="42"
+                    Style="{StaticResource MenuButtonStyle}"
+                    Tag="#4CDAE4" />
 
                 <Button
                     x:Name="ClosingButton"
@@ -103,30 +128,10 @@
                     Background="Transparent"
                     BorderThickness="0"
                     Click="ClosingButton_Click"
-                    Foreground="#b3251b">
-                    <Button.Template>
-                        <ControlTemplate TargetType="Button">
-                            <Border
-                                x:Name="ClosingButtonBorder"
-                                HorizontalAlignment="Stretch"
-                                VerticalAlignment="Stretch"
-                                Background="{TemplateBinding Background}">
-                                <TextBlock
-                                    x:Name="ClosingButtonText"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    FontSize="30"
-                                    Text="✖" />
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="ClosingButtonBorder" Property="Background" Value="#b3251b" />
-                                    <Setter TargetName="ClosingButtonText" Property="Foreground" Value="White" />
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Button.Template>
-                </Button>
+                    Content="✖"
+                    FontSize="30"
+                    Style="{StaticResource MenuButtonStyle}"
+                    Tag="#b3251b" />
 
             </StackPanel>
         </Grid>
@@ -134,7 +139,8 @@
         <Grid
             x:Name="MainMenu"
             Grid.Row="1"
-            ClipToBounds="True">
+            ClipToBounds="True"
+            SnapsToDevicePixels="True">
 
             <Canvas
                 x:Name="GameCanvas"
@@ -229,6 +235,39 @@
                         </Button.Template>
                     </Button>
 
+                </StackPanel>
+            </Grid>
+
+            <Grid
+                x:Name="EscapeMenu"
+                Background="#800F0F0F"
+                Visibility="Hidden">
+                <StackPanel
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Orientation="Vertical">
+                    <Button
+                        x:Name="ResumeButton"
+                        Click="EscapeMenuButton_Click"
+                        Content="Resume"
+                        FontSize="54"
+                        Style="{StaticResource MenuButtonStyle}"
+                        Tag="#b3251b" />
+
+                    <Button
+                        x:Name="OptionsButton"
+                        Click="EscapeMenuButton_Click"
+                        Content="Options"
+                        FontSize="54"
+                        Style="{StaticResource MenuButtonStyle}"
+                        />
+                    <Button
+                        x:Name="ExitMenu"
+                        Click="EscapeMenuButton_Click"
+                        Content="Exit"
+                        FontSize="54"
+                        Style="{StaticResource MenuButtonStyle}"
+                        />
                 </StackPanel>
             </Grid>
 
@@ -634,6 +673,39 @@
                             Background="Transparent"
                             BorderThickness="0"
                             Click="EditorGridTitle_Click"
+                            Content="ON"
+                            FontSize="36"
+                            Foreground="LightGreen">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal">
+                        <Button
+                            x:Name="EditorChunkGridTitle"
+                            HorizontalAlignment="Left"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Click="EditorChunkGridTitle_Click"
+                            Content="ChGr:"
+                            FontSize="36"
+                            Foreground="White">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                        <Button
+                            x:Name="EditorChunkGridBool"
+                            HorizontalAlignment="Left"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Click="EditorChunkGridTitle_Click"
                             Content="ON"
                             FontSize="36"
                             Foreground="LightGreen">

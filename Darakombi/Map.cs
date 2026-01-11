@@ -23,18 +23,18 @@ namespace Darakombi
 
         public bool RectInside(Point pos)
         {
-            return pos.X >= Thickness
-                && pos.X <= Width - Thickness
-                && pos.Y >= Thickness
-                && pos.Y <= Height - Thickness;
+            return pos.X > Thickness
+                && pos.X < Width - Thickness
+                && pos.Y > Thickness
+                && pos.Y < Height - Thickness;
         }
 
         public bool RectInside(Rect rect)
         {
-            return rect.Left >= Thickness
-                && rect.Top >= Thickness
-                && rect.Right <= Width - Thickness
-                && rect.Bottom <= Height - Thickness;
+            return rect.Left > Thickness
+                && rect.Top > Thickness
+                && rect.Right < Width - Thickness
+                && rect.Bottom < Height - Thickness;
         }
     }
 }

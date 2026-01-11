@@ -4,10 +4,10 @@
     {
         public GlobalContext Context { get; set; }
         public UIElement HUD { get; set; }
+        public bool Paused { get; set; }
 
         void Start();
         void Update(double dt, Rect viewport);
-        void Stop();
         void End();
 
         StringBuilder DynamicDebug { get; init; }

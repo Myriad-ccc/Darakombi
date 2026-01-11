@@ -1,55 +1,125 @@
 ﻿using System.IO;
 using System.Text.Json;
+using static Darakombi.Editor;
 
 namespace Darakombi
 {
     public class Editor : FrameworkElement
     {
         public readonly record struct TileColor(byte R, byte G, byte B);
+        private readonly Dictionary<TileColor, SolidColorBrush> BrushCache = [];
         public readonly record struct Tile(int X, int Y, TileColor Color);
-        public readonly Dictionary<(int x, int y), Tile> Tiles = [];
+        public readonly Dictionary<(int X, int Y), Tile> Tiles = [];
+        private readonly record struct MapData(int Width, int Height, List<Tile> Tiles);
 
+        private readonly Dictionary<(int X, int Y), Dictionary<TileColor, StreamGeometry>> ChunkLayers = [];
+        private readonly Dictionary<(int X, int Y), Dictionary<TileColor, HashSet<(int X, int Y)>>> ChunkTiles = [];
         public readonly List<Tile> BufferTiles = [];
-        public readonly List<TileColor> BufferColors = [];
+        private readonly HashSet<((int cx, int cy), TileColor color)> BufferChunks = [];
 
-        public readonly record struct MapData(int Width, int Height, List<Tile> Tiles);
-
-        private readonly Dictionary<TileColor, StreamGeometry> TileLayers = [];
-        private readonly Dictionary<TileColor, HashSet<(int X, int Y)>> TileColors = [];
-
-        public int CellSize;
-        public Rect Viewport;
+        private readonly int CellSize;
+        private readonly int ChunkSize;
 
         public bool DrawOver { get; set; } = false;
         public bool Saved { get; set; } = false;
 
-        public bool NeedsRedraw = false;
-
-        public Editor(int cellSize)
+        public Editor(int cellSize, int chunkSize)
         {
             CellSize = cellSize;
+            ChunkSize = chunkSize;
             SnapsToDevicePixels = true;
             UseLayoutRounding = true;
             RenderOptions.SetEdgeMode(this, EdgeMode.Aliased);
-
-            CacheMode = new BitmapCache()
-            {
-                EnableClearType = true,
-                SnapsToDevicePixels = true,
-                RenderAtScale = 1.0
-            };
         }
 
+        private (int X, int Y) GetChunkCell(int x, int y) => (x / ChunkSize, y / ChunkSize);
+        private (int X, int Y) GetChunkCell((int x, int y) cell) => (cell.x / ChunkSize, cell.y / ChunkSize);
         private static (int X, int Y) GetCell(Tile tile) => new(tile.X, tile.Y);
-        private static SolidColorBrush GetBrush(TileColor tileColor) => new()
-        { Color = Color.FromRgb(tileColor.R, tileColor.G, tileColor.B) };
 
-        public void LayerTiles(TileColor color)
+        private SolidColorBrush GetBrush(TileColor color)
         {
-            if (!TileColors.TryGetValue(color, out var tiles) || tiles.Count == 0)
+            if(!BrushCache.TryGetValue(color, out var brush))
             {
-                TileLayers.Remove(color);
-                TileColors.Remove(color);
+                brush = new() { Color = Color.FromRgb(color.R, color.G, color.B) };
+                brush.Freeze(); //...
+                BrushCache[color] = brush;
+            }
+            return brush;
+        }
+
+        public void Add(Tile tile)
+        {
+            var cell = GetCell(tile);
+            if (Tiles.TryGetValue(cell, out _) && !DrawOver) return;
+
+            Tiles[cell] = tile;
+            BufferTiles.Add(tile);
+            DebugHelper.Tiles = Tiles.Count;
+            DebugHelper.BufferTiles++;
+        }
+        public void Remove(Tile tile)
+        {
+            var tileCell = GetCell(tile);
+            if (Tiles.Remove(tileCell))
+            {
+                var chunkCell = GetChunkCell(tileCell);
+                if (ChunkTiles.TryGetValue(chunkCell, out var layers))
+                    if (layers.TryGetValue(tile.Color, out var chunkTiles))
+                        if (chunkTiles.Remove((tile.X, tile.Y)))
+                        {
+                            if (chunkTiles.Count == 0)
+                                layers.Remove(tile.Color);
+                            UpdateChunkLayer(chunkCell, tile.Color);
+                            InvalidateVisual();
+                        }
+            }
+        }
+        public void Clear()
+        {
+            Tiles.Clear();
+            ChunkTiles.Clear();
+            ChunkLayers.Clear();
+        }
+
+        public void CommitBuffer()
+        {
+            if (BufferTiles.Count == 0) return;
+
+            //BufferColors.Clear();
+
+            foreach (var tile in BufferTiles)
+            {
+                var chunkCell = GetChunkCell(tile.X, tile.Y);
+                if (!ChunkTiles.TryGetValue(chunkCell, out _))
+                    ChunkTiles[chunkCell] = [];
+                if (!ChunkTiles[chunkCell].TryGetValue(tile.Color, out _))
+                    ChunkTiles[chunkCell][tile.Color] = [];
+
+                ChunkTiles[chunkCell][tile.Color].Add((tile.X, tile.Y));
+                BufferChunks.Add((chunkCell, tile.Color));
+            }
+
+            foreach (var (cell, color) in BufferChunks)
+                UpdateChunkLayer(cell, color);
+
+            BufferTiles.Clear();
+            BufferChunks.Clear();
+
+            DebugHelper.BufferTiles = 0;
+            InvalidateVisual();
+        }
+
+        public void UpdateChunkLayer((int x, int y) chunkCell, TileColor layerColor)
+        {
+            if (!ChunkLayers.TryGetValue(chunkCell, out _))
+                ChunkLayers[chunkCell] = [];
+
+            HashSet<(int X, int Y)> tiles = null;
+            if (ChunkTiles.TryGetValue(chunkCell, out var layers))
+                layers.TryGetValue(layerColor, out tiles);
+            if (tiles == null || tiles.Count == 0)
+            {
+                ChunkTiles[chunkCell].Remove(layerColor);
                 return;
             }
 
@@ -65,63 +135,16 @@ namespace Darakombi
                     false, false);
             }
             layer.Freeze();
-            TileLayers[color] = layer;
-        }
-
-        public void Add(Tile tile)
-        {
-            var cell = GetCell(tile);
-            if (Tiles.TryGetValue(cell, out _) && !DrawOver) return;
-            Tiles[cell] = tile;
-            BufferTiles.Add(tile);
-            NeedsRedraw = true;
-        }
-
-        public void CommitBuffer()
-        {
-            if (BufferTiles.Count == 0) return;
-
-            BufferColors.Clear();
-            foreach (var tile in BufferTiles)
-            {
-                if (!TileColors.TryGetValue(tile.Color, out _))
-                    TileColors[tile.Color] = [];
-                TileColors[tile.Color].Add(new(tile.X, tile.Y));
-                BufferColors.Add(tile.Color);
-            }
-
-            foreach (var color in BufferColors)
-                LayerTiles(color);
-
-            BufferTiles.Clear();
-            InvalidateVisual();
-        }
-
-        public void Remove(Tile tile)
-        {
-            if (Tiles.Remove(GetCell(tile)))
-            {
-                if (TileColors.TryGetValue(tile.Color, out var tiles))
-                {
-                    tiles.Remove(new(tile.X, tile.Y));
-                    LayerTiles(tile.Color);
-                    InvalidateVisual();
-                }
-            }
-        }
-
-        public void Clear()
-        {
-            Tiles.Clear();
-            TileColors.Clear();
+            ChunkLayers[chunkCell][layerColor] = layer;
         }
 
         protected override void OnRender(DrawingContext drawingContext)
         {
-            foreach (var (color, tiles) in TileLayers)
-                drawingContext.DrawGeometry(GetBrush(color), null, tiles);
+            foreach (var chunk in ChunkLayers.Values)
+                foreach (var (color, geometry) in chunk)
+                    drawingContext.DrawGeometry(GetBrush(color), null, geometry);
             foreach (var tile in BufferTiles)
-                drawingContext.DrawRectangle(GetBrush(tile.Color), null, 
+                drawingContext.DrawRectangle(GetBrush(tile.Color), null,
                     new(tile.X, tile.Y, CellSize, CellSize));
         }
 
