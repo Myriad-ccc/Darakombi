@@ -73,5 +73,14 @@ namespace Darakombi
                 && mousePos.Y >= 0 && mousePos.Y <= (element.ActualHeight == 0 ? element.Height : element.ActualHeight);
         }
 
+        public static bool NumInRange(int num, int min, int max) => num >= min && num <= max;
+        public static bool NumInRange(double num, double min, double max) => num >= min && num <= max;
+
+        public static bool SizeInRange(Size size, double minW, double maxW, double minH, double maxH) =>
+            size.Width >= minW && size.Width <= maxW &&
+            size.Height >= minH && size.Height <= maxH;
+        public static bool SizeInRange(double width, double height, double minW, double maxW, double minH, double maxH) =>
+            width >= minW && width <= maxW &&
+            height >= minH && height <= maxH;
     }
 }

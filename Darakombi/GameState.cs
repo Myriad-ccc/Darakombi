@@ -191,5 +191,15 @@
                 AddEntity(new T(),
                     force: false, random: true);
         }
+
+        public void ClearEntities()
+        {
+            Player = null;
+            Entities.Clear();
+            AllEntityData.Clear();
+            LiveEntities.Clear();
+            Enemies.Clear();
+            Rocks.Clear();
+        }
     }
 }

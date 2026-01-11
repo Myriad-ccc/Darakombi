@@ -33,8 +33,9 @@ namespace Darakombi
 
         public HashSet<Key> PressedKeys => Context.PressedKeys;
 
-        public Action<UIElement, int> AddElementToCanvas;
-        public Action<Size> ResizeMap;
+        public event Action<UIElement, int> AddElementToCanvas;
+        public event Action<UIElement> RemoveElementFromCanvas;
+        public event Action<Size> ResizeMap;
 
         public StringBuilder DynamicDebug { get; init; } = new();
         public StringBuilder EventDebug { get; init; } = new();
@@ -103,10 +104,9 @@ namespace Darakombi
             ModeDebug = new StringBuilder($"{dyn}{ev}{st}");
         }
 
-        public void Update(double dt, Rect viewport)
+        public void Update(double dt)
         {
             if (Paused) return;
-            Context.Viewport = new(-TranslateTransform.X, -TranslateTransform.Y, viewport.Width, viewport.Height);
             ModeDebug.Clear();
             if (Editor.BufferTiles.Count > 0)
                 Editor.InvalidateVisual();
@@ -116,7 +116,12 @@ namespace Darakombi
 
         public void End()
         {
+            Paused = true;
             HUD?.Visibility = Visibility.Hidden;
+            Editor?.Clear();
+            Editor = null;
+            RemoveElementFromCanvas?.Invoke(EditorGrid);
+            EditorGrid = null;
         }
 
         private Point WorldMousePos;

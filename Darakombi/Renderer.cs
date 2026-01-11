@@ -15,10 +15,7 @@ namespace Darakombi
 
         public bool ShowOverlays { get; set; } = true;
 
-        public Renderer(Canvas canvas)
-        {
-            Canvas = canvas;
-        }
+        public Renderer(Canvas canvas) => Canvas = canvas;
 
         public void RenderEntities(IEnumerable<EntityData> viewportEntities)
         {
@@ -130,6 +127,15 @@ namespace Darakombi
         {
             Visuals.Clear();
             Overlays.Clear();
+        }
+
+        public void ClearAll()
+        {
+            foreach (var visual in Visuals)
+                Canvas.Children.Remove(visual);
+            foreach (var overlay in Overlays)
+                Canvas.Children.Remove(overlay);
+            ClearCache();
         }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using System.IO;
 using System.Text.Json;
-using static Darakombi.Editor;
 
 namespace Darakombi
 {
@@ -23,6 +22,9 @@ namespace Darakombi
         public bool DrawOver { get; set; } = false;
         public bool Saved { get; set; } = false;
 
+        public event Action<Size> ResizeMap;
+        //public event Action<UIElement> RemoveElementFromCanvas;
+
         public Editor(int cellSize, int chunkSize)
         {
             CellSize = cellSize;
@@ -38,7 +40,7 @@ namespace Darakombi
 
         private SolidColorBrush GetBrush(TileColor color)
         {
-            if(!BrushCache.TryGetValue(color, out var brush))
+            if (!BrushCache.TryGetValue(color, out var brush))
             {
                 brush = new() { Color = Color.FromRgb(color.R, color.G, color.B) };
                 brush.Freeze(); //...
@@ -77,6 +79,7 @@ namespace Darakombi
         public void Clear()
         {
             Tiles.Clear();
+            BrushCache.Clear();
             ChunkTiles.Clear();
             ChunkLayers.Clear();
         }
@@ -84,8 +87,6 @@ namespace Darakombi
         public void CommitBuffer()
         {
             if (BufferTiles.Count == 0) return;
-
-            //BufferColors.Clear();
 
             foreach (var tile in BufferTiles)
             {
@@ -171,8 +172,6 @@ namespace Darakombi
             File.WriteAllText(path, json);
         }
 
-        public Action<Size> ResizeMap;
-
         public void Load(string path)
         {
             if (!File.Exists(path)) return;
@@ -183,9 +182,7 @@ namespace Darakombi
             ResizeMap?.Invoke(new(mapData.Width, mapData.Height));
 
             foreach (var tile in mapData.Tiles)
-            {
                 Add(new Tile(tile.X, tile.Y, tile.Color));
-            }
             InvalidateVisual();
         }
     }

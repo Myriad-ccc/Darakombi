@@ -15,6 +15,22 @@
         public static double MousePosY { get; set; }
         public static double ZoomFactor { get; set; }
 
+        public static void ResetValues()
+        {
+            VelocityX = 0;
+            VelocityY = 0;
+
+            PlayerX = 0;
+            PlayerY = 0;
+
+            Tiles = 0;
+            BufferTiles = 0;
+
+            MousePosX = 0;
+            MousePosY = 0;
+            ZoomFactor = 0;
+        }
+
         public static string GetGameDynamic()
         {
             var sb = new StringBuilder();

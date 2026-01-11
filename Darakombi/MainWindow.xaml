@@ -93,7 +93,14 @@
                     Padding="20,0,0,0"
                     VerticalAlignment="Center"
                     FontSize="20"
-                    Foreground="DarkGoldenrod" />
+                    Foreground="Aqua" />
+
+                <TextBlock
+                    x:Name="MapSizeText"
+                    Padding="20,0,0,0"
+                    VerticalAlignment="Center"
+                    FontSize="20"
+                    Foreground="MediumPurple" />
             </StackPanel>
 
             <StackPanel
@@ -256,20 +263,29 @@
 
                     <Button
                         x:Name="OptionsButton"
-                        Click="EscapeMenuButton_Click"
+                        Click="OptionsButton_Click"
                         Content="Options"
                         FontSize="54"
-                        Style="{StaticResource MenuButtonStyle}"
-                        />
+                        Style="{StaticResource MenuButtonStyle}" />
                     <Button
-                        x:Name="ExitMenu"
-                        Click="EscapeMenuButton_Click"
+                        x:Name="ExitMenuButton"
+                        Click="ExitMenuButton_Click"
                         Content="Exit"
                         FontSize="54"
                         Style="{StaticResource MenuButtonStyle}"
-                        />
+                        Tag="#b3251b" />
                 </StackPanel>
             </Grid>
+            <Grid
+                x:Name="DebugMenu"
+                Background="#800F0F0F"
+                Visibility="Hidden">
+                <StackPanel
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Orientation="Vertical" />
+            </Grid>
+
 
             <Grid x:Name="MapMenu" Visibility="Hidden">
                 <Grid.RowDefinitions>
@@ -510,12 +526,13 @@
 
                                 <Button
                                     MinWidth="90"
-                                    Background="Gray"
                                     BorderThickness="0"
                                     Click="EditorSave_Click"
                                     Content="Save"
                                     FontSize="36"
-                                    Foreground="White" />
+                                    Foreground="White"
+                                    Tag="#B5338A"
+                                    Style="{StaticResource MenuButtonStyle}"/>
                             </StackPanel>
                         </StackPanel>
                     </Border>
@@ -525,18 +542,12 @@
                     x:Name="EditorSave"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Top"
-                    Background="Transparent"
                     BorderThickness="0"
                     Click="EditorSave_Click"
                     Content="Save"
                     FontSize="50"
-                    Foreground="White">
-                    <Button.Template>
-                        <ControlTemplate TargetType="Button">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </ControlTemplate>
-                    </Button.Template>
-                </Button>
+                    Tag="#b5338A"
+                    Style="{StaticResource MenuButtonStyle}"/>
 
                 <StackPanel
                     x:Name="EditorOverlay"

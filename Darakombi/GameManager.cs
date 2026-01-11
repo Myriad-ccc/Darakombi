@@ -15,17 +15,18 @@
         public Player Player => Game?.Player;
         public SpatialGrid SpatialGrid => Game?.SpatialGrid;
 
-        public Rect Viewport => Context.Viewport;
-        public Map Map => Context.Map;
-        public ScaleTransform ScaleTransform => Context.ScaleTransform;
-        public SkewTransform SkewTransform => Context.SkewTransform;
-        public RotateTransform RotateTransform => Context.RotateTransform;
-        public TranslateTransform TranslateTransform => Context.TranslateTransform;
-        public HashSet<Key> PressedKeys => Context.PressedKeys;
+        private Rect Viewport => Context.Viewport;
+        private Map Map => Context.Map;
+        private ScaleTransform ScaleTransform => Context.ScaleTransform;
+        private SkewTransform SkewTransform => Context.SkewTransform;
+        private RotateTransform RotateTransform => Context.RotateTransform;
+        private TranslateTransform TranslateTransform => Context.TranslateTransform;
+        private HashSet<Key> PressedKeys => Context.PressedKeys;
 
-        public Action<UIElement, int> AddElementToCanvas;
-        public Action ClearViewport;
-        public Action ClearMap;
+        public event Action<UIElement, int> AddElementToCanvas;
+        public event Action<UIElement> RemoveElementFromCanvas;
+        public event Action ClearViewport;
+        public event Action ClearMap;
 
         public StringBuilder DynamicDebug { get; init; } = new();
         public StringBuilder EventDebug { get; init; } = new();
@@ -164,10 +165,9 @@
             ModeDebug = new StringBuilder($"{dyn}{ev}{st}");
         }
 
-        public void Update(double dt, Rect viewport)
+        public void Update(double dt)
         {
             if (Paused) return;
-            Context.Viewport = new(-TranslateTransform.X, -TranslateTransform.Y, viewport.Width, viewport.Height);
             DynamicDebug.Clear();
             ModeDebug.Clear();
             //entityCounter.Clear();
@@ -182,7 +182,14 @@
 
         public void End()
         {
+            Paused = true;
             HUD?.Visibility = Visibility.Hidden;
+            Renderer?.ClearCache();
+            Renderer = null;
+            RemoveElementFromCanvas?.Invoke(SpatialCellGrid);
+            Game?.SpatialGrid = null;
+            Game?.ClearEntities();
+            Game = null;
         }
     }
 }

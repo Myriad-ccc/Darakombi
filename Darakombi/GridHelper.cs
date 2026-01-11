@@ -28,11 +28,11 @@ namespace Darakombi
             Canvas.SetLeft(grid, 0);
             Canvas.SetTop(grid, 0);
 
-            Update();
+            Build();
             return grid;
         }
 
-        public void Update()
+        public void Build()
         {
             for (int x = 0; x <= Width; x += CellSize)
             {
@@ -61,6 +61,35 @@ namespace Darakombi
                 };
                 Children.Add(line);
             }
+        }
+
+        public void UpdateVisuals(Brush newColor = null, double? newThickness = null, double? newOpacity = null)
+        {
+            foreach (var child in Children)
+            {
+                if (child is Line line)
+                {
+                    line.Stroke = newColor ?? line.Stroke;
+                    line.StrokeThickness = newThickness ?? line.StrokeThickness;
+                }
+            }
+            Thickness = newThickness ?? Thickness;
+            Opacity = newOpacity ?? Opacity;
+        }
+
+        public void UpdateCellSize(int newCellSize)
+        {
+            CellSize = newCellSize;
+            Children.Clear();
+            Build();
+        }
+
+        public void UpdateGridSize(Size newSize)
+        {
+            Width = newSize.Width;
+            Height = newSize.Height;
+            Children.Clear();
+            Build();
         }
     }
 }

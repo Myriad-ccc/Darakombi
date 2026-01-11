@@ -7,9 +7,6 @@
 
         public Rect LastRect;
 
-        public LoadStage CurrentLoadStage;
-        public LoadStage TargetLoadStage;
-
         public int GX { get; set; } = -1;
         public int GY { get; set; } = -1;
 
@@ -26,7 +23,6 @@
             Entity = entity;
             LastRect = entity.Rect;
             Visible = false;
-            CurrentLoadStage = LoadStage.Unrendered;
         }
     }
 }

@@ -7,7 +7,7 @@
         public bool Paused { get; set; }
 
         void Start();
-        void Update(double dt, Rect viewport);
+        void Update(double dt);
         void End();
 
         StringBuilder DynamicDebug { get; init; }
