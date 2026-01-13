@@ -82,33 +82,67 @@ namespace Darakombi
 
         private void BuildDebugMenu()
         {
-            DebugOptions.Children.Clear();
+            CategoryTabs.Children.Clear();
+
             foreach (var category in DebugManager.Registry)
             {
-                var header = new TextBlock
+                var tabPanel = new StackPanel() { Orientation = Orientation.Vertical };
+                CategoryTabs.Children.Add(tabPanel);
+
+                var tabTitle = (new TextBlock
                 {
                     Text = category.Key,
-                    FontSize = 36,
-                    Foreground = Brushes.White,
+                    FontSize = 32,
+                    Foreground = Brushes.Gray
+                });
+                tabPanel.Children.Add(tabTitle);
+
+                var tabItems = new StackPanel() { Orientation = Orientation.Vertical };
+                tabPanel.Children.Add(tabItems);
+
+                tabTitle.MouseDown += (s, ev) =>
+                {
+                    if (ev.ChangedButton == MouseButton.Left)
+                        tabItems.Visibility = tabItems.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
                 };
-                DebugOptions.Children.Add(header);
+
                 foreach (var item in category.Value)
                 {
+                    var ButtonTextPair = new StackPanel() { Orientation = Orientation.Horizontal, };
+                    var attributeName = new TextBlock()
+                    {
+                        Text = $"{item.Name}",
+                        Foreground = Brushes.White,
+                        FontSize = 28,
+                        Background = Brushes.Transparent,
+                        HorizontalAlignment = HorizontalAlignment.Left
+                    };
                     var toggle = new Button()
                     {
-                        Content = $"{item.Name}:" + (item.Active ? "✔": "✖"),
-                        Foreground = (item.Active ? Brushes.LightGreen : Brushes.IndianRed),
-                        FontSize = 42,
+                        Content = item.Active ? "✓" : "✗",
+                        Tag = item.Active ? Brushes.LightGreen : Brushes.IndianRed,
+                        Style = (Style)FindResource("MenuButtonStyle"),
                         Background = Brushes.Transparent,
-                        HorizontalContentAlignment = HorizontalAlignment.Left
+                        BorderBrush = Brushes.Beige,
+                        BorderThickness = new(3),
+                        FontSize = attributeName.FontSize,
+                        Width = attributeName.Height,
+                        Height = attributeName.Height,
+                        MinWidth = 40,
+                        MinHeight = 40,
+                        HorizontalContentAlignment = HorizontalAlignment.Center,
+                        VerticalContentAlignment = VerticalAlignment.Center,
                     };
                     toggle.Click += (s, ev) =>
                     {
                         item.Active = !item.Active;
-                        toggle.Content = $"{item.Name}:" + (item.Active ? "✔" : "✖");
-                        toggle.Foreground = (item.Active ? Brushes.LightGreen : Brushes.IndianRed);
+                        toggle.Content = item.Active ? "✓" : "✗";
+                        toggle.Tag = item.Active ? Brushes.LightGreen : Brushes.IndianRed;
+                        tabTitle.Foreground = category.Value.Any(x => x.Active) ? Brushes.Gold : Brushes.Gray;
                     };
-                    DebugOptions.Children.Add(toggle);
+                    ButtonTextPair.Children.Add(toggle);
+                    ButtonTextPair.Children.Add(attributeName);
+                    tabItems.Children.Add(ButtonTextPair);
                 }
             }
         }
@@ -162,8 +196,16 @@ namespace Darakombi
         private void DebugMenuButton_Click(object sender, RoutedEventArgs e)
         {
             if (CurrentMode == null) return;
-            Toggle();
-            DebugMenu.Visibility = !Active ? Visibility.Visible : Visibility.Hidden;
+            if (QOL.IsVis(DebugMenu))
+            {
+                DebugText.Visibility = Visibility.Visible;
+                DebugMenu.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                DebugText.Visibility = Visibility.Collapsed;
+                DebugMenu.Visibility = Visibility.Visible;
+            }
         }
 
         private HashSet<Key> IgnoredKeys = [Key.LeftAlt, Key.RightAlt, Key.Capital, Key.LWin, Key.RWin];
@@ -183,6 +225,7 @@ namespace Darakombi
             if (!e.IsRepeat) PressedKeys.Add(key);
 
             if (PressedKeys.Contains(Key.Escape)) Escape();
+            if (PressedKeys.Contains(Key.OemTilde)) DebugMenuButton_Click(null, null);
         }
         private void Window_KeyUp(object sender, KeyEventArgs e)
         {
@@ -467,6 +510,16 @@ namespace Darakombi
             GameManager?.Renderer?.ClearCache();
             GC.Collect();
         }
+        public void ResetTransforms()
+        {
+            CameraScale.ScaleX = 1;
+            CameraScale.ScaleY = 1;
+            CameraSkew.AngleX = 0;
+            CameraSkew.AngleY = 0;
+            CameraRotate.Angle = 0;
+            CameraTransform.X = 0;
+            CameraTransform.Y = 0;
+        }
 
         private void PlayButton_Click(object sender, RoutedEventArgs e)
         {
@@ -508,20 +561,6 @@ namespace Darakombi
             EditorManager = null;
         }
 
-        public void ResetTransforms()
-        {
-            CameraScale.ScaleX = 1;
-            CameraScale.ScaleY = 1;
-            CameraSkew.AngleX = 0;
-            CameraSkew.AngleY = 0;
-            CameraRotate.Angle = 0;
-            CameraTransform.X = 0;
-            CameraTransform.Y = 0;
-        }
-
-
-
-
         private void InitializeMode(IManager mode)
         {
             if (CurrentMode == mode) return;
@@ -562,13 +601,16 @@ namespace Darakombi
                 {
                     CurrentMode.Context.Viewport = Viewport;
                     CurrentMode.Update(dt);
-                    DebugText.Text = DebugManager.GetDebugString(false);
+                    DebugText.Text = DebugManager.GetDebugString();
+                    RuntimeDebugText.Text = $"fps:{QOL.GetAverageFPS(dt):F0}";
                 }
             }
         }
-        private void Toggle() => CurrentMode.Active = Active = !Active;
+        private void Pause() => CurrentMode.Active = Active = false;
+        private void Resume() => CurrentMode.Active = Active = true;
         private void Exit()
         {
+            DebugManager.Clear(); //!!!!
             if (CurrentMode == null) return;
             CompositionTarget.Rendering -= OnRender;
             CurrentMode.End();
@@ -579,7 +621,6 @@ namespace Darakombi
             Map = null;
             WorldCanvas.Children.Clear();
             ResetTransforms();
-            //DebugManager.ResetValues();
 
             GameCanvas.Visibility = Visibility.Hidden;
             StartMenu.Visibility = Visibility.Visible;
@@ -597,8 +638,16 @@ namespace Darakombi
         private void Escape()
         {
             if (CurrentMode == null) return;
-            Toggle();
-            EscapeMenu.Visibility = !Active ? Visibility.Visible : Visibility.Hidden;
+            if (Active)
+            {
+                EscapeMenu.Visibility = Visibility.Visible;
+                Pause();
+            }
+            else
+            {
+                EscapeMenu.Visibility = Visibility.Collapsed;
+                Resume();
+            }
         }
     }
 }

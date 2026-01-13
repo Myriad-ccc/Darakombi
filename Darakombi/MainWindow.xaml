@@ -278,15 +278,19 @@
             </Grid>
             <Grid
                 x:Name="DebugMenu"
-                Background="#800F0F0F"
+                MaxHeight="530"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                Background="#CC0F0F0F"
                 Visibility="Hidden">
-                <ScrollViewer VerticalScrollBarVisibility="Visible">
-                    <StackPanel
-                        x:Name="DebugOptions"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Top"
-                        Orientation="Vertical" />
-                </ScrollViewer>
+                <ScrollViewer VerticalScrollBarVisibility="Hidden" />
+                <StackPanel Orientation="Vertical">
+                    <TextBlock
+                        FontSize="44"
+                        Foreground="MediumPurple"
+                        Text="QuickDisplay" />
+                    <StackPanel x:Name="CategoryTabs" Orientation="Horizontal" />
+                </StackPanel>
             </Grid>
 
 

@@ -87,21 +87,8 @@
         {
             ScaleTransform.ScaleX = 0.5;
             ScaleTransform.ScaleY = 0.5;
-            //DebugManager.ZoomFactor = 0.5;
             TranslateTransform.X = Viewport.Width / 2 - (Map.Center.X * ScaleTransform.ScaleX);
             TranslateTransform.Y = Viewport.Height / 2 - (Map.Center.Y * ScaleTransform.ScaleY);
-        }
-
-        public void DebugAdd()
-        {
-            //DebugManager.MousePosX = WorldMousePos.X;
-            //DebugManager.MousePosY = WorldMousePos.Y;
-            //EventDebug.Clear();
-            //EventDebug.Append(DebugManager.GetEditorEvent());
-            //var dyn = DynamicDebug.Length == 0 ? null : DynamicDebug + "\n";
-            //var ev = EventDebug.Length == 0 ? null : EventDebug + "\n";
-            //var st = StaticDebug.Length == 0 ? null : StaticDebug + "\0";
-            //ModeDebug = new StringBuilder($"{dyn}{ev}{st}");
         }
 
         public void Update(double dt)
@@ -233,8 +220,6 @@
                 ScaleTransform.ScaleX = ScaleTransform.ScaleY = newScale;
                 TranslateTransform.X = screenMousePos.X - WorldMousePos.X * newScale;
                 TranslateTransform.Y = screenMousePos.Y - WorldMousePos.Y * newScale;
-
-                //DebugManager.ZoomFactor = newScale;
             }
             else //horz scroll
                 TranslateTransform.X += step;

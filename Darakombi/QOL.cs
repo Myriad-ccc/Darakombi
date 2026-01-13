@@ -82,5 +82,13 @@ namespace Darakombi
         public static bool SizeInRange(double width, double height, double minW, double maxW, double minH, double maxH) =>
             width >= minW && width <= maxW &&
             height >= minH && height <= maxH;
+
+        public static bool NameObjectMatch(string name, object obj)
+        {
+            var type = obj.GetType();
+            return type != null && (name == type.Name || type.GetProperty(name) != null || type.GetField(name) != null);
+        }
+
+        public static bool IsVis(FrameworkElement el) => el.Visibility == Visibility.Visible;
     }
 }

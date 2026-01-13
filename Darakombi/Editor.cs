@@ -3,6 +3,7 @@ using System.Text.Json;
 
 namespace Darakombi
 {
+    [DebugWatch]
     public class Editor : FrameworkElement
     {
         public readonly record struct TileColor(byte R, byte G, byte B);
@@ -32,6 +33,7 @@ namespace Darakombi
             SnapsToDevicePixels = true;
             UseLayoutRounding = true;
             RenderOptions.SetEdgeMode(this, EdgeMode.Aliased);
+            DebugManager.Track(this);
         }
 
         private (int X, int Y) GetChunkCell(int x, int y) => (x / ChunkSize, y / ChunkSize);
@@ -56,8 +58,6 @@ namespace Darakombi
 
             Tiles[cell] = tile;
             BufferTiles.Add(tile);
-            //DebugManager.Tiles = Tiles.Count;
-            //DebugManager.BufferTiles++;
         }
         public void Remove(Tile tile)
         {
@@ -106,7 +106,6 @@ namespace Darakombi
             BufferTiles.Clear();
             BufferChunks.Clear();
 
-            //DebugManager.BufferTiles = 0;
             InvalidateVisual();
         }
 

@@ -51,35 +51,33 @@ namespace Darakombi
 
             bool trackClass = type.GetCustomAttribute<DebugWatch>() != null;
 
-            foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
             {
                 if (property.GetCustomAttribute<DebugIgnore>() != null) return;
                 var attribute = property.GetCustomAttribute<DebugWatch>();
                 if (attribute != null || (trackClass && property.GetMethod?.IsPublic == true))
                     Register(category, attribute?.Name ?? property?.Name, () => property?.GetValue(target)?.ToString());
             }
-            foreach (var field in type.GetFields(BindingFlags.Public | BindingFlags.Instance))
+            foreach (var field in type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
             {
                 if (field.GetCustomAttribute<DebugIgnore>() != null) return;
                 var attribute = field.GetCustomAttribute<DebugWatch>();
                 if (attribute != null || (trackClass && field.IsPublic))
-                    Register(category, attribute.Name ?? field.Name, () => field.GetValue(target)?.ToString());
+                    Register(category, attribute?.Name ?? field.Name, () => field?.GetValue(target)?.ToString());
             }
         }
 
-        public static string GetDebugString(bool includeHeader = false)
+        public static string GetDebugString(bool includeCategoryHeader = true)
         {
             var sb = new StringBuilder();
             foreach (var category in Registry)
             {
+                if (includeCategoryHeader && category.Value.Any(x => x.Active))
+                    sb.AppendLine($"{category.Key}:");
                 foreach (var item in category.Value)
                 {
                     if (item.Active)
-                    {
-                        if (includeHeader)
-                            sb.AppendLine($"-{category.Key}-");
                         sb.AppendLine($"{item.Name}:{item.GetValue.Invoke().ToString()}");
-                    }
                 }
             }
             return sb.ToString();
