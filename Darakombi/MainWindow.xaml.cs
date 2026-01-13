@@ -14,7 +14,7 @@ namespace Darakombi
     {
         private readonly Stopwatch Uptime = Stopwatch.StartNew();
         private double lastFrame;
-        private bool Paused = false;
+        private bool Active = true;
 
         private bool WindowDragging;
         private Point WindowDragOffset;
@@ -64,6 +64,54 @@ namespace Darakombi
         private Player Player => (CurrentMode as GameManager)?.Player;
         private SpatialGrid SpatialGrid => (CurrentMode as GameManager)?.SpatialGrid;
         private Editor Editor => (CurrentMode as EditorManager)?.Editor;
+
+        public MainWindow()
+        {
+            InitializeComponent();
+
+            lastFrame = Uptime.Elapsed.TotalSeconds;
+
+            TitleText.Foreground = QOL.RandomColor();
+            TitleTextShadow.Foreground = QOL.RandomColor();
+
+            MapSizeText.Text = $"{MapSize.Width}x{MapSize.Height}";
+            MapWidthContent.Text = MapSize.Width.ToString();
+            MapHeightContent.Text = MapSize.Height.ToString();
+            DebugManager.OnRegistryChanged += BuildDebugMenu;
+        }
+
+        private void BuildDebugMenu()
+        {
+            DebugOptions.Children.Clear();
+            foreach (var category in DebugManager.Registry)
+            {
+                var header = new TextBlock
+                {
+                    Text = category.Key,
+                    FontSize = 36,
+                    Foreground = Brushes.White,
+                };
+                DebugOptions.Children.Add(header);
+                foreach (var item in category.Value)
+                {
+                    var toggle = new Button()
+                    {
+                        Content = $"{item.Name}:" + (item.Active ? "✔": "✖"),
+                        Foreground = (item.Active ? Brushes.LightGreen : Brushes.IndianRed),
+                        FontSize = 42,
+                        Background = Brushes.Transparent,
+                        HorizontalContentAlignment = HorizontalAlignment.Left
+                    };
+                    toggle.Click += (s, ev) =>
+                    {
+                        item.Active = !item.Active;
+                        toggle.Content = $"{item.Name}:" + (item.Active ? "✔" : "✖");
+                        toggle.Foreground = (item.Active ? Brushes.LightGreen : Brushes.IndianRed);
+                    };
+                    DebugOptions.Children.Add(toggle);
+                }
+            }
+        }
 
         private void TitleBar_MouseDown(object sender, MouseButtonEventArgs e)
         {
@@ -115,7 +163,7 @@ namespace Darakombi
         {
             if (CurrentMode == null) return;
             Toggle();
-            DebugMenu.Visibility = Paused ? Visibility.Visible : Visibility.Hidden;
+            DebugMenu.Visibility = !Active ? Visibility.Visible : Visibility.Hidden;
         }
 
         private HashSet<Key> IgnoredKeys = [Key.LeftAlt, Key.RightAlt, Key.Capital, Key.LWin, Key.RWin];
@@ -471,19 +519,8 @@ namespace Darakombi
             CameraTransform.Y = 0;
         }
 
-        public MainWindow()
-        {
-            InitializeComponent();
 
-            lastFrame = Uptime.Elapsed.TotalSeconds;
 
-            TitleText.Foreground = QOL.RandomColor();
-            TitleTextShadow.Foreground = QOL.RandomColor();
-
-            MapSizeText.Text = $"{MapSize.Width}x{MapSize.Height}";
-            MapWidthContent.Text = MapSize.Width.ToString();
-            MapHeightContent.Text = MapSize.Height.ToString();
-        }
 
         private void InitializeMode(IManager mode)
         {
@@ -511,24 +548,25 @@ namespace Darakombi
                 TranslateTransform = CameraTransform
             };
             CurrentMode.Context = Context;
-            Paused = CurrentMode.Paused = false;
+            Active = CurrentMode.Active = true;
             CurrentMode.Start();
 
             CompositionTarget.Rendering += OnRender;
         }
         private void Update(double dt)
         {
-            if (Paused) return;
-            TopKeys.Text = string.Join(',', PressedKeys.Take(4));
-            if (CurrentMode != null)
+            if (Active)
             {
-                CurrentMode.Context.Viewport = Viewport;
-                CurrentMode.Update(dt);
-                DebugText.Text = CurrentMode.ModeDebug.ToString();
+                TopKeys.Text = string.Join(',', PressedKeys.Take(4));
+                if (CurrentMode != null)
+                {
+                    CurrentMode.Context.Viewport = Viewport;
+                    CurrentMode.Update(dt);
+                    DebugText.Text = DebugManager.GetDebugString(false);
+                }
             }
-            RuntimeDebugText.Text = new StringBuilder($"upt:{Uptime.Elapsed:mm\\:ss}|fps:{QOL.GetAverageFPS(dt):F0}").ToString();
         }
-        private void Toggle() => CurrentMode.Paused = Paused = !Paused;
+        private void Toggle() => CurrentMode.Active = Active = !Active;
         private void Exit()
         {
             if (CurrentMode == null) return;
@@ -541,7 +579,7 @@ namespace Darakombi
             Map = null;
             WorldCanvas.Children.Clear();
             ResetTransforms();
-            DebugHelper.ResetValues();
+            //DebugManager.ResetValues();
 
             GameCanvas.Visibility = Visibility.Hidden;
             StartMenu.Visibility = Visibility.Visible;
@@ -560,7 +598,7 @@ namespace Darakombi
         {
             if (CurrentMode == null) return;
             Toggle();
-            EscapeMenu.Visibility = Paused ? Visibility.Visible : Visibility.Hidden;
+            EscapeMenu.Visibility = !Active ? Visibility.Visible : Visibility.Hidden;
         }
     }
 }

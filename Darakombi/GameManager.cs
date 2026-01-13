@@ -4,7 +4,7 @@
     {
         public GlobalContext Context { get; set; }
         public UIElement HUD { get; set; }
-        public bool Paused { get; set; }
+        public bool Active { get; set; } = true;
 
         public GameState Game;
         public Renderer Renderer;
@@ -45,7 +45,7 @@
             AddElementToCanvas?.Invoke(SpatialCellGrid, 10);
         }
 
-        public void Move(double dt)
+        public void EntityMove(Player player,double dt)
         {
             var d = new Vector();
 
@@ -55,32 +55,32 @@
             if (PressedKeys.Contains(Key.D)) d.X += 1;
 
             if (d.X != 0 || d.Y != 0) d.Normalize();
-            d.X *= Player.Speed * dt;
-            d.Y *= Player.Speed * dt;
+            d.X *= player.Speed * dt;
+            d.Y *= player.Speed * dt;
 
-            Point pos = Player.Pos;
-            Size size = Player.Size;
+            Point pos = player.Pos;
+            Size size = player.Size;
             Rect newRect;
 
             double gap = 1e-10;
             double leftEdge = Map.Thickness;
             double topEdge = Map.Thickness;
-            double rightEdge = Map.Width - Map.Thickness - Player.Width;
-            double bottomEdge = Map.Height - Map.Thickness - Player.Height;
+            double rightEdge = Map.Width - Map.Thickness - player.Width;
+            double bottomEdge = Map.Height - Map.Thickness - player.Height;
 
-            Rect searchArea = Player.Rect;
-            searchArea.Inflate(Player.Speed * dt + 10, Player.Speed * dt + 10);
+            Rect searchArea = player.Rect;
+            searchArea.Inflate(player.Speed * dt + 10, player.Speed * dt + 10);
             var colliders = SpatialGrid.Search(searchArea);
 
             pos.X += d.X;
             newRect = new Rect(pos, size);
             foreach (var collider in colliders.Where(c => c.Entity.CollisionType != CollisionType.Live))
             {
-                if (Player.CollisionType == CollisionType.Ghost) break;
+                if (player.CollisionType == CollisionType.Ghost) break;
                 if (newRect.IntersectsWith(collider.Rect))
                 {
                     if (d.X > 0)
-                        pos.X = collider.Pos.X - Player.Width - gap;
+                        pos.X = collider.Pos.X - player.Width - gap;
                     else if (d.X < 0)
                         pos.X = collider.Pos.X + collider.Width + gap;
                     newRect = new Rect(pos, size);
@@ -91,11 +91,11 @@
             newRect = new Rect(pos, size);
             foreach (var collider in colliders.Where(c => c.Entity.CollisionType != CollisionType.Live))
             {
-                if (Player.CollisionType == CollisionType.Ghost) break;
+                if (player.CollisionType == CollisionType.Ghost) break;
                 if (newRect.IntersectsWith(collider.Rect))
                 {
                     if (d.Y > 0)
-                        pos.Y = collider.Pos.Y - Player.Height - gap;
+                        pos.Y = collider.Pos.Y - player.Height - gap;
                     else if (d.Y < 0)
                         pos.Y = collider.Pos.Y + collider.Height + gap;
                     newRect = new Rect(pos, size);
@@ -106,37 +106,33 @@
             pos.Y = Math.Max(topEdge, Math.Min(pos.Y, bottomEdge));
 
             if (double.IsNaN(pos.X) || double.IsNaN(pos.Y))
-                QOL.WriteOut("Player pos NaN");
+                QOL.WriteOut("player pos NaN");
 
-            Player.Pos = pos;
+            player.Pos = pos;
 
-            DebugHelper.VelocityX = d.X * 1 / dt;
-            DebugHelper.VelocityY = d.Y * 1 / dt;
-
+            player.VX = d.X * 1 / dt;
+            player.VY = d.Y * 1 / dt;
         }
 
-        public void CameraUpdate()
+        public void CameraFollow(Entity entity)
         {
-            double px = Player.Pos.X + Player.Width / 2;
-            double py = Player.Pos.Y + Player.Height / 2;
+            double ex = entity.Pos.X + entity.Width / 2;
+            double ey = entity.Pos.Y + entity.Height / 2;
 
             double screenCenterX = Viewport.Width / 2;
             double screenCenterY = Viewport.Height / 2;
 
-            double offsetX = screenCenterX - px;
-            double offsetY = screenCenterY - py;
+            double offsetX = screenCenterX - ex;
+            double offsetY = screenCenterY - ey;
 
             offsetX = Math.Min(0, Math.Max(offsetX, Viewport.Width - Game.Map.Width));
             offsetY = Math.Min(0, Math.Max(offsetY, Viewport.Height - Game.Map.Height));
 
             TranslateTransform.X = offsetX;
             TranslateTransform.Y = offsetY;
-
-            DebugHelper.PlayerX = px;
-            DebugHelper.PlayerY = py;
         }
 
-        public void KeyDo()
+        public void InvokeKeys()
         {
             if (PressedKeys.Remove(Key.R))
                 Game.AddTestRock();
@@ -150,39 +146,23 @@
                 Game.AddTestEnemy();
         }
 
-        public void Debug()
-        {
-            //entityCounter.AppendLine("Entities:");
-            //entityCounter.AppendLine($"rocks:{game.Rocks.Count}");
-            //entityCounter.AppendLine($"enemies:{game.Enemies.Count}");
-            //EntityCounter.Text = entityCounter.ToString();
-            DynamicDebug.Append(DebugHelper.GetGameDynamic());
-            EventDebug.Clear();
-            EventDebug.Append(DebugHelper.GetGameEvent());
-            var dyn = DynamicDebug.Length == 0 ? null : DynamicDebug + "\n";
-            var ev = EventDebug.Length == 0 ? null : EventDebug + "\n";
-            var st = StaticDebug.Length == 0 ? null : StaticDebug + "\0";
-            ModeDebug = new StringBuilder($"{dyn}{ev}{st}");
-        }
-
         public void Update(double dt)
         {
-            if (Paused) return;
-            DynamicDebug.Clear();
-            ModeDebug.Clear();
-            //entityCounter.Clear();
-            Move(dt);
-            CameraUpdate();
-            foreach (var entityData in Game.LiveEntities)
-                SpatialGrid.Update(entityData);
-            Renderer.RenderEntities(SpatialGrid.Search(Viewport));
-            KeyDo();
-            Debug();
+            if (Active)
+            {
+                EntityMove(Game?.Player, dt);
+                foreach (var enemy in Game.Enemies) Game.EnemyAI(enemy, dt);
+                foreach (var entityData in Game.LiveEntities)
+                    SpatialGrid.Update(entityData);
+                CameraFollow(Game?.Player);
+                Renderer.RenderEntities(SpatialGrid.Search(Viewport));
+                InvokeKeys();
+            }
         }
 
         public void End()
         {
-            Paused = true;
+            Active = false;
             HUD?.Visibility = Visibility.Hidden;
             Renderer?.ClearCache();
             Renderer = null;

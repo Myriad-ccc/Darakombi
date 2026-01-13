@@ -56,8 +56,8 @@ namespace Darakombi
 
             Tiles[cell] = tile;
             BufferTiles.Add(tile);
-            DebugHelper.Tiles = Tiles.Count;
-            DebugHelper.BufferTiles++;
+            //DebugManager.Tiles = Tiles.Count;
+            //DebugManager.BufferTiles++;
         }
         public void Remove(Tile tile)
         {
@@ -106,7 +106,7 @@ namespace Darakombi
             BufferTiles.Clear();
             BufferChunks.Clear();
 
-            DebugHelper.BufferTiles = 0;
+            //DebugManager.BufferTiles = 0;
             InvalidateVisual();
         }
 

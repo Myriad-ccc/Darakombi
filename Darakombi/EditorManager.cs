@@ -1,12 +1,10 @@
-﻿using System.Data.Common;
-
-namespace Darakombi
+﻿namespace Darakombi
 {
     public class EditorManager : IManager
     {
         public GlobalContext Context { get; set; }
         public UIElement HUD { get; set; }
-        public bool Paused { get; set; }
+        public bool Active { get; set; } = true;
 
         public Editor Editor;
 
@@ -67,7 +65,7 @@ namespace Darakombi
             ClampTranslate();
         }
 
-        public void KeyFunctions(double dt)
+        public void InvokeKeys(double dt)
         {
             Move(dt);
             CanZoom = PressedKeys.Contains(Key.LeftCtrl) || PressedKeys.Contains(Key.RightCtrl);  // require [0] later
@@ -87,36 +85,39 @@ namespace Darakombi
 
         public void ResetCam()
         {
-            ScaleTransform.ScaleX = ScaleTransform.ScaleY = DebugHelper.ZoomFactor = 0.5;
+            ScaleTransform.ScaleX = 0.5;
+            ScaleTransform.ScaleY = 0.5;
+            //DebugManager.ZoomFactor = 0.5;
             TranslateTransform.X = Viewport.Width / 2 - (Map.Center.X * ScaleTransform.ScaleX);
             TranslateTransform.Y = Viewport.Height / 2 - (Map.Center.Y * ScaleTransform.ScaleY);
         }
 
         public void DebugAdd()
         {
-            DebugHelper.MousePosX = WorldMousePos.X;
-            DebugHelper.MousePosY = WorldMousePos.Y;
-            EventDebug.Clear();
-            EventDebug.Append(DebugHelper.GetEditorEvent());
-            var dyn = DynamicDebug.Length == 0 ? null : DynamicDebug + "\n";
-            var ev = EventDebug.Length == 0 ? null : EventDebug + "\n";
-            var st = StaticDebug.Length == 0 ? null : StaticDebug + "\0";
-            ModeDebug = new StringBuilder($"{dyn}{ev}{st}");
+            //DebugManager.MousePosX = WorldMousePos.X;
+            //DebugManager.MousePosY = WorldMousePos.Y;
+            //EventDebug.Clear();
+            //EventDebug.Append(DebugManager.GetEditorEvent());
+            //var dyn = DynamicDebug.Length == 0 ? null : DynamicDebug + "\n";
+            //var ev = EventDebug.Length == 0 ? null : EventDebug + "\n";
+            //var st = StaticDebug.Length == 0 ? null : StaticDebug + "\0";
+            //ModeDebug = new StringBuilder($"{dyn}{ev}{st}");
         }
 
         public void Update(double dt)
         {
-            if (Paused) return;
-            ModeDebug.Clear();
-            if (Editor.BufferTiles.Count > 0)
-                Editor.InvalidateVisual();
-            KeyFunctions(dt);
-            DebugAdd();
+            if (Active)
+            {
+                ModeDebug.Clear();
+                if (Editor.BufferTiles.Count > 0)
+                    Editor.InvalidateVisual();
+                InvokeKeys(dt);
+            }
         }
 
         public void End()
         {
-            Paused = true;
+            Active = false;
             HUD?.Visibility = Visibility.Hidden;
             Editor?.Clear();
             Editor = null;
@@ -233,7 +234,7 @@ namespace Darakombi
                 TranslateTransform.X = screenMousePos.X - WorldMousePos.X * newScale;
                 TranslateTransform.Y = screenMousePos.Y - WorldMousePos.Y * newScale;
 
-                DebugHelper.ZoomFactor = newScale;
+                //DebugManager.ZoomFactor = newScale;
             }
             else //horz scroll
                 TranslateTransform.X += step;

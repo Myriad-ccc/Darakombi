@@ -280,10 +280,13 @@
                 x:Name="DebugMenu"
                 Background="#800F0F0F"
                 Visibility="Hidden">
-                <StackPanel
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Orientation="Vertical" />
+                <ScrollViewer VerticalScrollBarVisibility="Visible">
+                    <StackPanel
+                        x:Name="DebugOptions"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Top"
+                        Orientation="Vertical" />
+                </ScrollViewer>
             </Grid>
 
 
@@ -531,8 +534,8 @@
                                     Content="Save"
                                     FontSize="36"
                                     Foreground="White"
-                                    Tag="#B5338A"
-                                    Style="{StaticResource MenuButtonStyle}"/>
+                                    Style="{StaticResource MenuButtonStyle}"
+                                    Tag="#B5338A" />
                             </StackPanel>
                         </StackPanel>
                     </Border>
@@ -546,8 +549,8 @@
                     Click="EditorSave_Click"
                     Content="Save"
                     FontSize="50"
-                    Tag="#b5338A"
-                    Style="{StaticResource MenuButtonStyle}"/>
+                    Style="{StaticResource MenuButtonStyle}"
+                    Tag="#b5338A" />
 
                 <StackPanel
                     x:Name="EditorOverlay"

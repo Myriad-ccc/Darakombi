@@ -4,7 +4,7 @@
     {
         public GlobalContext Context { get; set; }
         public UIElement HUD { get; set; }
-        public bool Paused { get; set; }
+        public bool Active { get; set; }
 
         void Start();
         void Update(double dt);
