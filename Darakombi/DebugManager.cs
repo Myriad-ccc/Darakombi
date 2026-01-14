@@ -6,7 +6,12 @@ namespace Darakombi
     public class DebugWatch : Attribute
     {
         public string Name { get; }
-        public DebugWatch(string name = null) => Name = name;
+        public string Format { get; }
+        public DebugWatch(string n = null, string f = null)
+        {
+            Name = n;
+            Format = f;
+        }
     }
 
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
@@ -46,24 +51,54 @@ namespace Darakombi
         public static void Track(object target, string category = null)
         {
             if (target == null) return;
+
             var type = target.GetType();
             category ??= type.Name;
-
             bool trackClass = type.GetCustomAttribute<DebugWatch>() != null;
+
+            Register(category, "!ToStr", () => target.ToString());
 
             foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
             {
                 if (property.GetCustomAttribute<DebugIgnore>() != null) return;
                 var attribute = property.GetCustomAttribute<DebugWatch>();
                 if (attribute != null || (trackClass && property.GetMethod?.IsPublic == true))
-                    Register(category, attribute?.Name ?? property?.Name, () => property?.GetValue(target)?.ToString());
+                {
+                    var name = attribute?.Name ?? property?.Name;
+                    var format = attribute?.Format;
+
+                    string getValue()
+                    {
+                        var value = property.GetValue(target);
+                        if (value == null) return "null";
+
+                        if (!string.IsNullOrEmpty(format) && value is IFormattable valFormattable)
+                            return valFormattable.ToString(format, null);
+                        return value.ToString();
+                    }
+                    Register(category, name, getValue);
+                }
             }
             foreach (var field in type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
             {
                 if (field.GetCustomAttribute<DebugIgnore>() != null) return;
                 var attribute = field.GetCustomAttribute<DebugWatch>();
-                if (attribute != null || (trackClass && field.IsPublic))
-                    Register(category, attribute?.Name ?? field.Name, () => field?.GetValue(target)?.ToString());
+                if (attribute != null || (trackClass && field.IsPublic == true))
+                {
+                    var name = attribute?.Name ?? field?.Name;
+                    var format = attribute?.Format;
+
+                    string getValue()
+                    {
+                        var value = field.GetValue(target);
+                        if (value == null) return "null";
+
+                        if (!string.IsNullOrEmpty(format) && value is IFormattable valFormattable)
+                            return valFormattable.ToString(format, null);
+                        return value.ToString();
+                    }
+                    Register(category, name, getValue);
+                }
             }
         }
 

@@ -13,6 +13,8 @@ namespace Darakombi
     public partial class MainWindow : Window
     {
         private readonly Stopwatch Uptime = Stopwatch.StartNew();
+        [DebugWatch(f: "mm\\:ss")]
+        private TimeSpan RunTime => Uptime.Elapsed;
         private double lastFrame;
         private bool Active = true;
 
@@ -78,16 +80,17 @@ namespace Darakombi
             MapWidthContent.Text = MapSize.Width.ToString();
             MapHeightContent.Text = MapSize.Height.ToString();
             DebugManager.OnRegistryChanged += BuildDebugMenu;
+            DebugManager.Track(this, "Main");
         }
 
         private void BuildDebugMenu()
-        {
-            CategoryTabs.Children.Clear();
+        {   
+            DebugCategoryTabs.Children.Clear();
 
-            foreach (var category in DebugManager.Registry)
+            foreach (var category in DebugManager.Registry.OrderByDescending(c => c.Value.Count))
             {
                 var tabPanel = new StackPanel() { Orientation = Orientation.Vertical };
-                CategoryTabs.Children.Add(tabPanel);
+                DebugCategoryTabs.Children.Add(tabPanel);
 
                 var tabTitle = (new TextBlock
                 {
@@ -106,43 +109,47 @@ namespace Darakombi
                         tabItems.Visibility = tabItems.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
                 };
 
-                foreach (var item in category.Value)
+                foreach (var item in category.Value.OrderBy(x => x.Name))
                 {
-                    var ButtonTextPair = new StackPanel() { Orientation = Orientation.Horizontal, };
+                    var indicatorAndAttribute = new StackPanel() { Orientation = Orientation.Horizontal };
+
                     var attributeName = new TextBlock()
                     {
                         Text = $"{item.Name}",
                         Foreground = Brushes.White,
-                        FontSize = 28,
+                        FontSize = 32,
+                        MaxWidth = 220,
+                        TextTrimming = TextTrimming.WordEllipsis,
                         Background = Brushes.Transparent,
-                        HorizontalAlignment = HorizontalAlignment.Left
+                        HorizontalAlignment = HorizontalAlignment.Center
                     };
-                    var toggle = new Button()
+
+                    var indicator = new Button()
                     {
-                        Content = item.Active ? "✓" : "✗",
+                        Content = "・",
                         Tag = item.Active ? Brushes.LightGreen : Brushes.IndianRed,
                         Style = (Style)FindResource("MenuButtonStyle"),
                         Background = Brushes.Transparent,
-                        BorderBrush = Brushes.Beige,
-                        BorderThickness = new(3),
+                        BorderThickness = new(0),
                         FontSize = attributeName.FontSize,
                         Width = attributeName.Height,
                         Height = attributeName.Height,
-                        MinWidth = 40,
-                        MinHeight = 40,
-                        HorizontalContentAlignment = HorizontalAlignment.Center,
-                        VerticalContentAlignment = VerticalAlignment.Center,
+                        MinWidth = 30,
+                        MinHeight = 30,
+                        HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                        VerticalContentAlignment = VerticalAlignment.Stretch,
                     };
-                    toggle.Click += (s, ev) =>
+                    indicator.Click += (s, ev) =>
                     {
                         item.Active = !item.Active;
-                        toggle.Content = item.Active ? "✓" : "✗";
-                        toggle.Tag = item.Active ? Brushes.LightGreen : Brushes.IndianRed;
+                        indicator.Tag = item.Active ? Brushes.LightGreen : Brushes.IndianRed;
                         tabTitle.Foreground = category.Value.Any(x => x.Active) ? Brushes.Gold : Brushes.Gray;
                     };
-                    ButtonTextPair.Children.Add(toggle);
-                    ButtonTextPair.Children.Add(attributeName);
-                    tabItems.Children.Add(ButtonTextPair);
+
+                    indicatorAndAttribute.Children.Add(indicator);
+                    indicatorAndAttribute.Children.Add(attributeName);
+
+                    tabItems.Children.Add(indicatorAndAttribute);
                 }
             }
         }

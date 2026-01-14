@@ -27,7 +27,6 @@
         <Style x:Key="MenuButtonStyle" TargetType="Button">
             <Setter Property="Tag" Value="#000000" />
             <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Foreground" Value="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" />
             <Setter Property="Template">
                 <Setter.Value>
@@ -278,19 +277,20 @@
             </Grid>
             <Grid
                 x:Name="DebugMenu"
-                MaxHeight="530"
+                MaxHeight="550"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top"
                 Background="#CC0F0F0F"
                 Visibility="Hidden">
-                <ScrollViewer VerticalScrollBarVisibility="Hidden" />
-                <StackPanel Orientation="Vertical">
-                    <TextBlock
-                        FontSize="44"
-                        Foreground="MediumPurple"
-                        Text="QuickDisplay" />
-                    <StackPanel x:Name="CategoryTabs" Orientation="Horizontal" />
-                </StackPanel>
+                <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Hidden">
+                    <StackPanel Orientation="Vertical">
+                        <TextBlock
+                            FontSize="44"
+                            Foreground="MediumPurple"
+                            Text="QuickDisplay" />
+                        <StackPanel x:Name="DebugCategoryTabs" Orientation="Horizontal" />
+                    </StackPanel>
+                </ScrollViewer>
             </Grid>
 
 

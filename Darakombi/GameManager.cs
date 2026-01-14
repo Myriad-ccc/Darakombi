@@ -1,12 +1,13 @@
 ﻿namespace Darakombi
 {
+    [DebugWatch]
     public class GameManager : IManager
     {
         public GlobalContext Context { get; set; }
         public UIElement HUD { get; set; }
         public bool Active { get; set; } = true;
 
-        public GameState Game;
+        public Game Game;
         public Renderer Renderer;
 
         public GridHelper SpatialCellGrid;
@@ -33,7 +34,11 @@
         public StringBuilder StaticDebug { get; init; } = new();
         public StringBuilder ModeDebug { get; set; } = new();
 
-        public GameManager(Renderer renderer) => Renderer = renderer;
+        public GameManager(Renderer renderer)
+        {
+            Renderer = renderer;
+            DebugManager.Track(this);
+        }
 
         public void Start()
         {

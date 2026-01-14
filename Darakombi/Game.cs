@@ -1,6 +1,6 @@
 ﻿namespace Darakombi
 {
-    public class GameState
+    public class Game
     {
         public Map Map;
         public SpatialGrid SpatialGrid;
@@ -16,7 +16,7 @@
 
         public Point MapCenter => new(Map.Center.X, Map.Center.Y);
 
-        public GameState(Map map)
+        public Game(Map map)
         {
             Map = map;
             SpatialGrid = new(map.Width, map.Height);

@@ -23,7 +23,9 @@ namespace Darakombi
         public double DetectionRange { get; set; }
 
         public Point Pos { get; set; } = new();
+        [DebugWatch(f: "F1")]
         public double X => Pos.X;
+        [DebugWatch(f: "F1")]
         public double Y => Pos.Y;
 
         public Size Size => new(Width, Height);
@@ -119,8 +121,6 @@ namespace Darakombi
 
     public interface ILive
     {
-        public double DX { get; set; }
-        public double DY { get; set; }
         public double Speed { get; set; }
         public double DetectionRange { get; set; }
     }
