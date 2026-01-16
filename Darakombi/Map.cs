@@ -17,7 +17,7 @@ namespace Darakombi
         {
             Width = size.Width;
             Height = size.Height;
-            Background = QOL.RGB(20);
+            Background = RGB(20);
             BorderThickness = new(0);
         }
 

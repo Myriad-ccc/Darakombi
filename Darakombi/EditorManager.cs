@@ -80,7 +80,7 @@
             var tile = new Editor.Tile(cellX, cellY, new(color.Color.R, color.Color.G, color.Color.B));
             Editor?.Add(tile);
 
-            QOL.D($"Placed block at {cellX}, {cellY}");
+            D($"Placed block at {cellX}, {cellY}");
         }
 
         public void ResetCam()
@@ -113,8 +113,8 @@
         }
 
         private Point WorldMousePos;
-        private Point ScreenToWorld(Point screenPos) => QOL.ScreenToWorld(screenPos, ScaleTransform, TranslateTransform);
-        private void UpdateWorldMousePos(Point screenMousePos) => WorldMousePos = ScreenToWorld(screenMousePos);
+        private Point EditorScreenToWorld(Point screenPos) => ScreenToWorld(screenPos, ScaleTransform, TranslateTransform);
+        private void UpdateWorldMousePos(Point screenMousePos) => WorldMousePos = EditorScreenToWorld(screenMousePos);
 
         public void OnMouseDown(object sender, MouseButtonEventArgs e, Point screenMousePos, SolidColorBrush color)
         {
@@ -130,7 +130,7 @@
             }
             else if (e.ChangedButton == MouseButton.Right)
             {
-                QOL.D("Started dragging camera");
+                D("Started dragging camera");
                 DraggingCamera = true;
                 LastMousePos = screenMousePos;
                 Mouse.Capture((UIElement)sender);
@@ -148,7 +148,7 @@
             {
                 if (DraggingCamera)
                 {
-                    QOL.D("Stopped dragging camera");
+                    D("Stopped dragging camera");
                     UpdateWorldMousePos(screenMousePos);
 
                     double dx = screenMousePos.X - LastMousePos.X;
@@ -177,7 +177,7 @@
                     TranslateTransform.Y += dy;
 
                     LastMousePos = screenMousePos;
-                    QOL.D($"Moving camera by {dx},{dy}");
+                    D($"Moving camera by {dx},{dy}");
                 }
             }
             else if (e.LeftButton == MouseButtonState.Pressed)

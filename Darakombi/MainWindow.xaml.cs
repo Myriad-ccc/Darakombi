@@ -6,6 +6,7 @@ global using System.Windows;
 global using System.Windows.Controls;
 global using System.Windows.Input;
 global using System.Windows.Media;
+global using static Darakombi.QOL;
 using Microsoft.Win32;
 
 namespace Darakombi
@@ -22,7 +23,6 @@ namespace Darakombi
         private Point WindowDragOffset;
 
         private readonly HashSet<Key> PressedKeys = [];
-        private Key TopKey => (PressedKeys.Count > 0) ? PressedKeys.First() : Key.None;
 
         private Rect Viewport
         {
@@ -75,8 +75,8 @@ namespace Darakombi
 
             lastFrame = Uptime.Elapsed.TotalSeconds;
 
-            TitleText.Foreground = QOL.RandomColor();
-            TitleTextShadow.Foreground = QOL.RandomColor();
+            TitleText.Foreground = RandomColor();
+            TitleTextShadow.Foreground = RandomColor();
 
             MapWidthContent.Text = MapSize.Width.ToString();
             MapHeightContent.Text = MapSize.Height.ToString();
@@ -84,6 +84,89 @@ namespace Darakombi
             DebugManager.Track(this, "Main");
         }
 
+        private void CreateConsoleButton(string name, StackPanel group, Action onClick, Func<bool> getState)
+        {
+            var panel = new StackPanel() { Orientation = Orientation.Horizontal };
+
+            var fontSize = 36f;
+            var background = Brushes.Transparent;
+
+            var onTag = FindResource("CoolGreen");
+            var offTag = FindResource("CoolRed");
+
+            Style style = (Style)FindResource("MenuButtonStyle");
+
+            var toggle = new Button()
+            {
+                FontSize = fontSize,
+                Background = background,
+                BorderThickness = new(0),
+                Style = style,
+            };
+
+            var text = new TextBlock()
+            {
+                Text = name,
+                FontSize = fontSize,
+                Foreground = Brushes.White,
+                Background = background,
+            };
+
+            void Update()
+            {
+                var on = getState();
+                if (on)
+                {
+                    toggle.Content = "ON";
+                    toggle.Tag = onTag;
+                }
+                else
+                {
+                    toggle.Content = "OFF";
+                    toggle.Tag = offTag;
+                }
+            }
+            toggle.Click += (s, ev) => { onClick(); Update(); };
+
+            panel.Children.Add(toggle);
+            panel.Children.Add(text);
+            Update();
+
+            group.Children.Add(panel);
+        }
+        private void RebuildConsole()
+        {
+            GameProperties.Children.Clear();
+            EditorProperties.Children.Clear();
+
+            if (CurrentMode is GameManager)
+            {
+                CreateConsoleButton("Clip", GameProperties,
+                    () => { Player?.CollisionType = Player?.CollisionType == CollisionType.Live ? CollisionType.Ghost : CollisionType.Live; },
+                    () => Player?.CollisionType == CollisionType.Ghost);
+                CreateConsoleButton("Ranges", GameProperties,
+                    () => GameManager?.Renderer?.ShowOverlays = !GameManager.Renderer.ShowOverlays,
+                    () => GameManager.Renderer.ShowOverlays);
+                CreateConsoleButton("Grid", GameProperties,
+                    () => ToggleVis(GameManager?.SpatialCellGrid),
+                    () => IsVis(GameManager?.SpatialCellGrid));
+            }
+            if (CurrentMode is EditorManager)
+            {
+                CreateConsoleButton("Colors", EditorProperties,
+                    () => ToggleVis(EditorColorSliders),
+                    () => IsVis(EditorColorSliders));
+                CreateConsoleButton("Draw over", EditorProperties,
+                    () => EditorManager?.Editor?.DrawOver = !EditorManager.Editor.DrawOver,
+                    () => EditorManager.Editor.DrawOver);
+                CreateConsoleButton("Grid", EditorProperties,
+                    () => ToggleVis(EditorManager?.EditorGrid),
+                    () => IsVis(EditorManager?.EditorGrid));
+                CreateConsoleButton("Chunk Grid", EditorProperties,
+                    () => ToggleVis(EditorManager?.ChunkGrid),
+                    () => IsVis(EditorManager?.ChunkGrid));
+            }
+        }
         private void BuildDebugMenu()
         {
             DebugCategoryTabs.Children.Clear();
@@ -166,10 +249,10 @@ namespace Darakombi
             }
             if (e.ChangedButton == MouseButton.Right)
             {
-                if (QOL.IsPointOverElement(e, TitleText) || QOL.IsPointOverElement(e, TitleTextShadow))
+                if (IsPointOverElement(e, TitleText) || IsPointOverElement(e, TitleTextShadow))
                 {
-                    TitleText.Foreground = QOL.RandomColor();
-                    TitleTextShadow.Foreground = QOL.RandomColor();
+                    TitleText.Foreground = RandomColor();
+                    TitleTextShadow.Foreground = RandomColor();
                 }
             }
         }
@@ -194,14 +277,26 @@ namespace Darakombi
         private void ClosingButton_Click(object sender, RoutedEventArgs e) => Application.Current.Shutdown();
         private void ConsoleButton_Click(object sender, RoutedEventArgs e)
         {
-            if (QOL.IsVis(ConsoleMenu))
+            PressedKeys.Clear();
+            DebugMenu.Visibility = Visibility.Collapsed;
+            DebugText.Visibility = Visibility.Collapsed;
+
+            if (IsVis(ConsoleMenu))
+            {
                 ConsoleMenu.Visibility = Visibility.Collapsed;
+                DebugText.Visibility = Visibility.Visible;
+            }
             else
+            {
                 ConsoleMenu.Visibility = Visibility.Visible;
+                CommandLine.Focus();
+                CommandLine.Clear();
+            }
         }
         private void DebugMenuButton_Click(object sender, RoutedEventArgs e)
         {
-            if (QOL.IsVis(DebugMenu))
+            if (IsVis(ConsoleMenu)) return;
+            if (IsVis(DebugMenu))
             {
                 DebugText.Visibility = Visibility.Visible;
                 DebugMenu.Visibility = Visibility.Collapsed;
@@ -235,18 +330,14 @@ namespace Darakombi
         }
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
-            var key = GetRealKey(e);
-            if (IgnoredKeys.Contains(key)) return;
-            if (!e.IsRepeat) PressedKeys.Add(key);
+            var k = GetRealKey(e);
+            if (IgnoredKeys.Contains(k)) return;
+            if (!e.IsRepeat && !(IsVis(ConsoleMenu) && k != Key.Escape))
+                PressedKeys.Add(k);
 
             if (PressedKeys.Contains(Key.Escape)) Escape();
-            if (PressedKeys.Contains(Key.OemTilde))
-            {
-                if (PressedKeys.Contains(Key.LeftShift) || PressedKeys.Contains(Key.RightShift))
-                    DebugMenuButton_Click(null, null);
-                else ConsoleButton_Click(null, null);
-            }
-            //if (PressedKeys.Contains(Key.P)) QOL.WriteOut(EditorHUD.Visibility);
+            if (PressedKeys.Contains(Key.OemTilde)) DebugMenuButton_Click(null, null);
+            if (PressedKeys.Contains(Key.OemQuestion)) ConsoleButton_Click(null, null);
         }
         private void Window_KeyUp(object sender, KeyEventArgs e)
         {
@@ -276,55 +367,6 @@ namespace Darakombi
                 em.OnMouseWheel(e, e.GetPosition(GameCanvas));
         }
 
-        private void GhostTitle_Click(object sender, RoutedEventArgs e)
-        {
-            bool isGhost = Player.CollisionType == CollisionType.Ghost;
-            if (isGhost)
-            {
-                Player.CollisionType = CollisionType.Live;
-                GhostBool.Content = "OFF";
-                GhostBool.Foreground = Brushes.IndianRed;
-            }
-            else
-            {
-                Player.CollisionType = CollisionType.Ghost;
-                GhostBool.Content = "ON";
-                GhostBool.Foreground = Brushes.LightGreen;
-            }
-        }
-        private void OverlayTitle_Click(object sender, RoutedEventArgs e)
-        {
-            bool isShown = GameManager.Renderer.ShowOverlays;
-            if (isShown)
-            {
-                GameManager?.Renderer?.ShowOverlays = false;
-                OverlayBool.Content = "OFF";
-                OverlayBool.Foreground = Brushes.IndianRed;
-            }
-            else
-            {
-                GameManager?.Renderer?.ShowOverlays = true;
-                OverlayBool.Content = "ON";
-                OverlayBool.Foreground = Brushes.LightGreen;
-            }
-        }
-        private void GridTitle_Click(object sender, RoutedEventArgs e)
-        {
-            bool isShown = GameManager?.SpatialCellGrid?.Visibility == Visibility.Visible;
-            if (isShown)
-            {
-                GameManager?.SpatialCellGrid?.Visibility = Visibility.Collapsed;
-                GridBool.Content = "OFF";
-                GridBool.Foreground = Brushes.IndianRed;
-            }
-            else
-            {
-                GameManager?.SpatialCellGrid?.Visibility = Visibility.Visible;
-                GridBool.Content = "ON";
-                GridBool.Foreground = Brushes.LightGreen;
-            }
-        }
-
         private void EditorSave_Click(object sender, RoutedEventArgs e)
         {
             EditorQuitWarning.Visibility = Visibility.Collapsed;
@@ -332,21 +374,6 @@ namespace Darakombi
             {
                 EditorManager?.Editor?.Save("MapSave.txt", Map.Size);
                 EditorManager?.Editor?.Saved = true;
-            }
-        }
-        private void ColorPickerTitle_Click(object sender, RoutedEventArgs e)
-        {
-            if (QOL.IsVis(EditorColorSliders))
-            {
-                EditorColorSliders.Visibility = Visibility.Collapsed;
-                ColorPickerBool.Content = "OFF";
-                ColorPickerBool.Tag = "#b3251b";
-            }
-            else
-            {
-                EditorColorSliders.Visibility = Visibility.Visible;
-                ColorPickerBool.Content = "ON";
-                ColorPickerBool.Tag = "#44B73E";
             }
         }
 
@@ -394,7 +421,7 @@ namespace Darakombi
         private bool TryMapSize(int width, int height)
         {
             var size = new Size(width, height);
-            if (QOL.SizeInRange(size, SmallestMap.Width, LargestMap.Width, SmallestMap.Height, LargestMap.Height))
+            if (SizeInRange(size, SmallestMap.Width, LargestMap.Width, SmallestMap.Height, LargestMap.Height))
             {
                 MapSize = size;
                 ResizeMap();
@@ -406,58 +433,12 @@ namespace Darakombi
         }
         private void TryMapSize(Size size)
         {
-            if (QOL.SizeInRange(size, SmallestMap.Width, LargestMap.Width, SmallestMap.Height, LargestMap.Height))
+            if (SizeInRange(size, SmallestMap.Width, LargestMap.Width, SmallestMap.Height, LargestMap.Height))
             {
                 MapSize = size;
                 ResizeMap();
                 EditorManager?.EditorGrid?.UpdateGridSize(size);
                 EditorManager?.ChunkGrid?.UpdateGridSize(size);
-            }
-        }
-
-        private void DrawOverTitle_Click(object sender, RoutedEventArgs e)
-        {
-            if (EditorManager.Editor.DrawOver)
-            {
-                DrawOverBool.Content = "OFF";
-                DrawOverBool.Foreground = Brushes.IndianRed;
-            }
-            else
-            {
-                DrawOverBool.Content = "ON";
-                DrawOverBool.Foreground = Brushes.LightGreen;
-            }
-            EditorManager.Editor?.DrawOver = !EditorManager.Editor.DrawOver;
-        }
-        private void EditorGridTitle_Click(object sender, RoutedEventArgs e)
-        {
-            bool isShown = EditorManager.EditorGrid?.Visibility == Visibility.Visible;
-            if (isShown)
-            {
-                EditorManager.EditorGrid?.Visibility = Visibility.Collapsed;
-                EditorGridBool.Content = "OFF";
-                EditorGridBool.Foreground = Brushes.IndianRed;
-            }
-            else
-            {
-                EditorManager.EditorGrid?.Visibility = Visibility.Visible;
-                EditorGridBool.Content = "ON";
-                EditorGridBool.Foreground = Brushes.LightGreen;
-            }
-        }
-        private void EditorChunkGridTitle_Click(object sender, RoutedEventArgs e)
-        {
-            if (EditorManager?.ChunkGrid?.Visibility == Visibility.Visible)
-            {
-                EditorManager?.ChunkGrid?.Visibility = Visibility.Collapsed;
-                EditorChunkGridBool.Foreground = Brushes.IndianRed;
-                EditorChunkGridBool.Content = "OFF";
-            }
-            else
-            {
-                EditorManager?.ChunkGrid?.Visibility = Visibility.Visible;
-                EditorChunkGridBool.Foreground = Brushes.LightGreen;
-                EditorChunkGridBool.Content = "ON";
             }
         }
 
@@ -530,7 +511,7 @@ namespace Darakombi
             GameManager?.Renderer?.ClearCache();
             GC.Collect();
         }
-        public void ResetTransforms()
+        private void ResetTransforms()
         {
             CameraScale.ScaleX = 1;
             CameraScale.ScaleY = 1;
@@ -609,14 +590,6 @@ namespace Darakombi
             Start();
         }
 
-        private void RebuildConsole()
-        {
-            if (CurrentMode is GameManager)
-            {
-
-            }
-        }
-
         private void Start()
         {
             if (CurrentMode == null) return;
@@ -650,7 +623,7 @@ namespace Darakombi
                     CurrentMode.Context.Viewport = Viewport;
                     CurrentMode.Update(dt);
                     DebugText.Text = DebugManager.GetDebugString();
-                    RuntimeDebugText.Text = $"fps:{QOL.GetAverageFPS(dt):F0}";
+                    RuntimeDebugText.Text = $"fps:{GetAverageFPS(dt):F0}";
                 }
             }
         }
@@ -689,6 +662,14 @@ namespace Darakombi
 
         private void Escape()
         {
+            if (IsVis(ConsoleMenu))
+            {
+                ConsoleMenu.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            DebugMenu.Visibility = Visibility.Collapsed;
+
             if (CurrentMode == null) return;
             if (Active)
             {

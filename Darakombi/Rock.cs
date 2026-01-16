@@ -35,7 +35,7 @@
         {
             RockType = GetRandomRockType();
             var type = RockTypes[RockType];
-            var size = QOL.GetRandomSize(type);
+            var size = GetRandomSize(type);
             Width = size.Width;
             Height = size.Height;
         }

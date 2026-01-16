@@ -89,6 +89,7 @@ namespace Darakombi
             return type != null && (name == type.Name || type.GetProperty(name) != null || type.GetField(name) != null);
         }
 
-        public static bool IsVis(FrameworkElement el) => el.Visibility == Visibility.Visible;
+        public static bool IsVis(FrameworkElement el) => el?.Visibility == Visibility.Visible;
+        public static void ToggleVis(UIElement element) => element?.Visibility = element?.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
     }
 }

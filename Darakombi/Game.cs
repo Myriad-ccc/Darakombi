@@ -39,8 +39,8 @@
         public void AddTestEnemy()
         {
             var enemy = new Enemy(new Size(80, 80));
-            var x = QOL.NextDoubleInRange(Player.X + Player.Width / 2 - Player.Width * 3 - enemy.Width, Player.X + Player.Width * 4 + enemy.Width);
-            var y = QOL.NextDoubleInRange(Player.Y + Player.Height / 2 - Player.Height * 3 - enemy.Height, Player.Y + Player.Height * 4 + enemy.Height);
+            var x = NextDoubleInRange(Player.X + Player.Width / 2 - Player.Width * 3 - enemy.Width, Player.X + Player.Width * 4 + enemy.Width);
+            var y = NextDoubleInRange(Player.Y + Player.Height / 2 - Player.Height * 3 - enemy.Height, Player.Y + Player.Height * 4 + enemy.Height);
             enemy.Pos = new(x, y);
             enemy.CreateOverlay(0.1);
             AddEntity(enemy);
@@ -63,8 +63,8 @@
 
         private Point GetRandomPosition(Entity entity) =>
             new(
-                QOL.NextDoubleInRange(Map.Thickness, Map.Width - Map.Thickness - entity.Width),
-                QOL.NextDoubleInRange(Map.Thickness, Map.Width - Map.Thickness - entity.Width)
+                NextDoubleInRange(Map.Thickness, Map.Width - Map.Thickness - entity.Width),
+                NextDoubleInRange(Map.Thickness, Map.Width - Map.Thickness - entity.Width)
                 );
 
         private void RerollSpawn(Entity entity) =>
@@ -152,7 +152,7 @@
 
         public void EnemyAI(Enemy enemy, double dt)
         {
-            double dist = QOL.GetDistance(enemy.Center, Player.Center);
+            double dist = GetDistance(enemy.Center, Player.Center);
             switch (enemy.State)
             {
                 case EnemyState.Idle:

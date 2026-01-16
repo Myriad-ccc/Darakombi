@@ -12,6 +12,7 @@
     FontFamily="VCR OSD Mono"
     Foreground="White"
     Icon="Assets/Icon.ico"
+    IsTabStop="False"
     KeyDown="Window_KeyDown"
     KeyUp="Window_KeyUp"
     PreviewKeyDown="Window_PreviewKeyDown"
@@ -290,221 +291,6 @@
             </Grid>
 
             <Grid
-                x:Name="ConsoleMenu"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Top"
-                Background="DarkSlateGray"
-                IsHitTestVisible="True"
-                Visibility="Visible">
-
-                <StackPanel Orientation="Vertical">
-                    <TextBlock
-                        Margin="0,0,0,30"
-                        Background="Transparent"
-                        FontSize="48"
-                        Foreground="White"
-                        Text="Console" />
-
-                    <Grid
-                        x:Name="GameProperties"
-                        HorizontalAlignment="Center"
-                        Visibility="Collapsed">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="*" />
-                            <RowDefinition Height="*" />
-                            <RowDefinition Height="*" />
-                            <RowDefinition Height="*" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-
-                        <Button
-                            x:Name="GhostTitle"
-                            Grid.Row="0"
-                            Grid.Column="0"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Click="GhostTitle_Click"
-                            Content="Ghost:"
-                            FontSize="36"
-                            Foreground="White" />
-                        <Button
-                            x:Name="GhostBool"
-                            Grid.Row="0"
-                            Grid.Column="1"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Click="GhostTitle_Click"
-                            Content="OFF"
-                            FontSize="36"
-                            Style="{StaticResource MenuButtonStyle}"
-                            Tag="{StaticResource CoolRed}" />
-
-                        <Button
-                            x:Name="OverlayTitle"
-                            Grid.Row="1"
-                            Grid.Column="0"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Click="OverlayTitle_Click"
-                            Content="Overlay:"
-                            FontSize="36"
-                            Foreground="White" />
-                        <Button
-                            x:Name="OverlayBool"
-                            Grid.Row="1"
-                            Grid.Column="1"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Click="OverlayTitle_Click"
-                            Content="ON"
-                            FontSize="36"
-                            Style="{StaticResource MenuButtonStyle}"
-                            Tag="{StaticResource CoolRed}" />
-
-                        <Button
-                            x:Name="GridTitle"
-                            Grid.Row="2"
-                            Grid.Column="0"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Click="GridTitle_Click"
-                            Content="Grid:"
-                            FontSize="36"
-                            Foreground="White" />
-                        <Button
-                            x:Name="GridBool"
-                            Grid.Row="2"
-                            Grid.Column="1"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Click="GridTitle_Click"
-                            Content="OFF"
-                            FontSize="36"
-                            Style="{StaticResource MenuButtonStyle}"
-                            Tag="{StaticResource CoolRed}" />
-
-                    </Grid>
-
-                    <StackPanel
-                        x:Name="EditorProperties"
-                        HorizontalAlignment="Center"
-                        Orientation="Vertical"
-                        Visibility="Visible">
-
-                        <StackPanel Orientation="Horizontal">
-                            <Button
-                                x:Name="ColorPickerBool"
-                                Grid.Row="1"
-                                Grid.Column="0"
-                                HorizontalAlignment="Left"
-                                Background="Transparent"
-                                BorderThickness="0"
-                                Click="ColorPickerTitle_Click"
-                                Content="・"
-                                FontSize="36"
-                                Margin="5,0,5,0"
-                                Style="{StaticResource MenuButtonStyle}"
-                                Tag="{StaticResource CoolRed}" />
-                            <Button
-                                x:Name="ColorPickerTitle"
-                                Grid.Row="1"
-                                Grid.Column="1"
-                                HorizontalAlignment="Left"
-                                Background="Transparent"
-                                BorderThickness="0"
-                                Click="ColorPickerTitle_Click"
-                                Content="Colors"
-                                FontSize="36"
-                                Foreground="White" />
-
-                        </StackPanel>
-
-                        <Button
-                            x:Name="DrawOverBool"
-                            Grid.Row="2"
-                            Grid.Column="1"
-                            HorizontalAlignment="Left"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Click="DrawOverTitle_Click"
-                            Content="OFF"
-                            FontSize="36"
-                            Style="{StaticResource MenuButtonStyle}"
-                            Tag="{StaticResource CoolRed}" />
-                        <Button
-                            x:Name="DrawOverTitle"
-                            Grid.Row="2"
-                            Grid.Column="0"
-                            HorizontalAlignment="Left"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Click="DrawOverTitle_Click"
-                            Content="Draw over:"
-                            FontSize="36"
-                            Foreground="White" />
-
-                        <Button
-                            x:Name="EditorGridBool"
-                            Grid.Row="3"
-                            Grid.Column="1"
-                            HorizontalAlignment="Left"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Click="GridTitle_Click"
-                            Content="OFF"
-                            FontSize="36"
-                            Style="{StaticResource MenuButtonStyle}"
-                            Tag="{StaticResource CoolRed}" />
-                        <Button
-                            x:Name="EditorGridTitle"
-                            Grid.Row="3"
-                            Grid.Column="0"
-                            HorizontalAlignment="Left"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Click="GridTitle_Click"
-                            Content="Show grid:"
-                            FontSize="36"
-                            Foreground="White" />
-
-                        <Button
-                            x:Name="EditorChunkGridBool"
-                            Grid.Row="4"
-                            Grid.Column="1"
-                            HorizontalAlignment="Left"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Click="EditorChunkGridTitle_Click"
-                            Content="OFF"
-                            FontSize="36"
-                            Style="{StaticResource MenuButtonStyle}"
-                            Tag="{StaticResource CoolRed}" />
-                        <Button
-                            x:Name="EditorChunkGridTitle"
-                            Grid.Row="4"
-                            Grid.Column="0"
-                            HorizontalAlignment="Left"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Click="EditorChunkGridTitle_Click"
-                            Content="Show chunks:"
-                            FontSize="36"
-                            Foreground="White" />
-
-                    </StackPanel>
-
-                </StackPanel>
-
-            </Grid>
-
-            <Grid
                 x:Name="DebugMenu"
                 MaxHeight="550"
                 HorizontalAlignment="Left"
@@ -521,6 +307,66 @@
                     </StackPanel>
                 </ScrollViewer>
             </Grid>
+
+            <Border
+                x:Name="ConsoleMenu"
+                IsHitTestVisible="True"
+                Background="#66232323"
+                BorderBrush="#000000"
+                BorderThickness="5"
+                Visibility="Collapsed">
+
+                <Grid Margin="5">
+
+                    <StackPanel Orientation="Vertical">
+
+                        <TextBlock
+                            HorizontalAlignment="Left"
+                            Background="Transparent"
+                            FontSize="48"
+                            Foreground="White"
+                            Text="Quick" />
+
+                        <StackPanel
+                            x:Name="GameProperties"
+                            HorizontalAlignment="Left"
+                            Orientation="Vertical"
+                            Visibility="Visible" />
+
+                        <StackPanel
+                            x:Name="EditorProperties"
+                            HorizontalAlignment="Left"
+                            Orientation="Vertical"
+                            Visibility="Collapsed" />
+
+                    </StackPanel>
+
+                    <StackPanel
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Bottom"
+                        Orientation="Vertical">
+                        <TextBlock
+                            Margin="0,30,0,0"
+                            HorizontalAlignment="Left"
+                            Background="Transparent"
+                            FontSize="48"
+                            Foreground="White"
+                            Text="Command" />
+
+                        <TextBox
+                            x:Name="CommandLine"
+                            Height="40"
+                            Background="#803C3C3C"
+                            BorderThickness="0"
+                            FontSize="36"
+                            HorizontalContentAlignment="Left"
+                            VerticalContentAlignment="Center"
+                            Foreground="White"/>
+                    </StackPanel>
+
+                </Grid>
+
+            </Border>
 
 
             <Grid x:Name="MapMenu" Visibility="Hidden">

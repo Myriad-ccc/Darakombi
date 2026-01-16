@@ -111,7 +111,7 @@
             pos.Y = Math.Max(topEdge, Math.Min(pos.Y, bottomEdge));
 
             if (double.IsNaN(pos.X) || double.IsNaN(pos.Y))
-                QOL.WriteOut("player pos NaN");
+                WriteOut("player pos NaN");
 
             player.Pos = pos;
 
