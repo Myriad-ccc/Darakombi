@@ -310,10 +310,10 @@
 
             <Border
                 x:Name="ConsoleMenu"
-                IsHitTestVisible="True"
                 Background="#66232323"
                 BorderBrush="#000000"
                 BorderThickness="5"
+                IsHitTestVisible="True"
                 Visibility="Collapsed">
 
                 <Grid Margin="5">
@@ -328,13 +328,13 @@
                             Text="Quick" />
 
                         <StackPanel
-                            x:Name="GameProperties"
+                            x:Name="GameFunctions"
                             HorizontalAlignment="Left"
                             Orientation="Vertical"
                             Visibility="Visible" />
 
                         <StackPanel
-                            x:Name="EditorProperties"
+                            x:Name="EditorFunctions"
                             HorizontalAlignment="Left"
                             Orientation="Vertical"
                             Visibility="Collapsed" />
@@ -356,18 +356,17 @@
                         <TextBox
                             x:Name="CommandLine"
                             Height="40"
+                            HorizontalContentAlignment="Left"
+                            VerticalContentAlignment="Center"
                             Background="#803C3C3C"
                             BorderThickness="0"
                             FontSize="36"
-                            HorizontalContentAlignment="Left"
-                            VerticalContentAlignment="Center"
-                            Foreground="White"/>
+                            Foreground="White" />
                     </StackPanel>
 
                 </Grid>
 
             </Border>
-
 
             <Grid x:Name="MapMenu" Visibility="Hidden">
                 <Grid.RowDefinitions>
@@ -446,8 +445,7 @@
                 </StackPanel>
             </Grid>
 
-
-            <Grid x:Name="EditorHUD" Visibility="Hidden">
+            <Grid x:Name="EditorHUD" Visibility="Collapsed">
 
                 <Grid
                     x:Name="EditorQuitWarning"
@@ -507,6 +505,23 @@
                     FontSize="50"
                     Style="{StaticResource MenuButtonStyle}"
                     Tag="#b5338A" />
+
+                <Button
+                    x:Name="EntityPicker"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    BorderThickness="0"
+                    Click="EntityPicker_Click"
+                    Content="Picker"
+                    FontSize="50"
+                    Style="{StaticResource MenuButtonStyle}"
+                    Tag="{StaticResource CoolRed}" Margin="0,49,5,0">
+                    <Button.RenderTransformOrigin>0.5,0.5</Button.RenderTransformOrigin>
+                    <Button.LayoutTransform>
+                        <RotateTransform Angle="270"/>
+                    </Button.LayoutTransform>
+                </Button>
+
 
                 <StackPanel
                     x:Name="EditorColorSliders"

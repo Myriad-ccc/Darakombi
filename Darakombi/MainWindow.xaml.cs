@@ -136,35 +136,35 @@ namespace Darakombi
         }
         private void RebuildConsole()
         {
-            GameProperties.Children.Clear();
-            EditorProperties.Children.Clear();
+            GameFunctions.Children.Clear();
+            EditorFunctions.Children.Clear();
 
             if (CurrentMode is GameManager)
             {
-                CreateConsoleButton("Clip", GameProperties,
+                CreateConsoleButton("Noclip", GameFunctions,
                     () => { Player?.CollisionType = Player?.CollisionType == CollisionType.Live ? CollisionType.Ghost : CollisionType.Live; },
                     () => Player?.CollisionType == CollisionType.Ghost);
-                CreateConsoleButton("Ranges", GameProperties,
+                CreateConsoleButton("Ranges", GameFunctions,
                     () => GameManager?.Renderer?.ShowOverlays = !GameManager.Renderer.ShowOverlays,
                     () => GameManager.Renderer.ShowOverlays);
-                CreateConsoleButton("Grid", GameProperties,
+                CreateConsoleButton("Grid", GameFunctions,
                     () => ToggleVis(GameManager?.SpatialCellGrid),
                     () => IsVis(GameManager?.SpatialCellGrid));
             }
             if (CurrentMode is EditorManager)
             {
-                CreateConsoleButton("Colors", EditorProperties,
+                CreateConsoleButton("Colors", EditorFunctions,
                     () => ToggleVis(EditorColorSliders),
                     () => IsVis(EditorColorSliders));
-                CreateConsoleButton("Draw over", EditorProperties,
-                    () => EditorManager?.Editor?.DrawOver = !EditorManager.Editor.DrawOver,
-                    () => EditorManager.Editor.DrawOver);
-                CreateConsoleButton("Grid", EditorProperties,
-                    () => ToggleVis(EditorManager?.EditorGrid),
-                    () => IsVis(EditorManager?.EditorGrid));
-                CreateConsoleButton("Chunk Grid", EditorProperties,
-                    () => ToggleVis(EditorManager?.ChunkGrid),
-                    () => IsVis(EditorManager?.ChunkGrid));
+                CreateConsoleButton("Draw over", EditorFunctions,
+                    () => EditorManager.Editor?.DrawOver = !EditorManager.Editor.DrawOver,
+                    () => EditorManager.Editor?.DrawOver ?? false);
+                CreateConsoleButton("Grid", EditorFunctions,
+                    () => ToggleVis(EditorManager.EditorGrid),
+                    () => IsVis(EditorManager.EditorGrid));
+                CreateConsoleButton("Chunk Grid", EditorFunctions,
+                    () => ToggleVis(EditorManager.ChunkGrid),
+                    () => IsVis(EditorManager.ChunkGrid));
             }
         }
         private void BuildDebugMenu()
@@ -527,7 +527,7 @@ namespace Darakombi
             if (GameManager == null)
             {
                 GameManager = new(new(WorldCanvas));
-                GameManager.HUD = GameProperties;
+                GameManager.HUD = GameFunctions;
                 GameManager.AddElementToCanvas += AddElementToCanvas;
                 GameManager.RemoveElementFromCanvas += RemoveElementFromCanvas;
                 GameManager.ClearViewport += ClearViewport;
@@ -549,7 +549,7 @@ namespace Darakombi
             {
                 EditorManager = new();
                 EditorManager.HUD = EditorHUD;
-                EditorProperties.Visibility = Visibility.Visible;
+                EditorFunctions.Visibility = Visibility.Visible;
                 EditorManager.AddElementToCanvas += AddElementToCanvas;
                 EditorManager.ResizeMap += TryMapSize;
             }
@@ -586,8 +586,8 @@ namespace Darakombi
             if (CurrentMode == mode) return;
             CurrentMode = mode;
             StartMenu.Visibility = Visibility.Collapsed;
-            RebuildConsole();
             Start();
+            RebuildConsole();
         }
 
         private void Start()
@@ -640,7 +640,7 @@ namespace Darakombi
             if (CurrentMode is EditorManager)
             {
                 DisposeEditorManager();
-                EditorProperties.Visibility = Visibility.Collapsed;
+                EditorFunctions.Visibility = Visibility.Collapsed;
             }
 
             Map = null;
@@ -682,5 +682,12 @@ namespace Darakombi
                 Resume();
             }
         }
+
+        private void EntityPicker_Click(object sender, RoutedEventArgs e)
+        {
+            
+        }
+
+
     }
 }
