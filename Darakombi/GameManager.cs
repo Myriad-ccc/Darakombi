@@ -168,7 +168,7 @@
         public void End()
         {
             Active = false;
-            HUD?.Visibility = Visibility.Hidden;
+            HUD?.Visibility = Visibility.Collapsed;
             Renderer?.ClearCache();
             Renderer = null;
             RemoveElementFromCanvas?.Invoke(SpatialCellGrid);

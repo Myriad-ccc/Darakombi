@@ -105,7 +105,7 @@
         public void End()
         {
             Active = false;
-            HUD?.Visibility = Visibility.Hidden;
+            HUD?.Visibility = Visibility.Collapsed;
             Editor?.Clear();
             Editor = null;
             RemoveElementFromCanvas?.Invoke(EditorGrid);

@@ -20,7 +20,9 @@ namespace Darakombi
 
         private bool WindowDragging;
         private Point WindowDragOffset;
+
         private readonly HashSet<Key> PressedKeys = [];
+        private Key TopKey => (PressedKeys.Count > 0) ? PressedKeys.First() : Key.None;
 
         private Rect Viewport
         {
@@ -76,7 +78,6 @@ namespace Darakombi
             TitleText.Foreground = QOL.RandomColor();
             TitleTextShadow.Foreground = QOL.RandomColor();
 
-            MapSizeText.Text = $"{MapSize.Width}x{MapSize.Height}";
             MapWidthContent.Text = MapSize.Width.ToString();
             MapHeightContent.Text = MapSize.Height.ToString();
             DebugManager.OnRegistryChanged += BuildDebugMenu;
@@ -84,7 +85,7 @@ namespace Darakombi
         }
 
         private void BuildDebugMenu()
-        {   
+        {
             DebugCategoryTabs.Children.Clear();
 
             foreach (var category in DebugManager.Registry.OrderByDescending(c => c.Value.Count))
@@ -191,18 +192,15 @@ namespace Darakombi
         }
         private void EscapeMenuButton_Click(object sender, RoutedEventArgs e) => Escape();
         private void ClosingButton_Click(object sender, RoutedEventArgs e) => Application.Current.Shutdown();
-        private void OptionsButton_Click(object sender, RoutedEventArgs e)
+        private void ConsoleButton_Click(object sender, RoutedEventArgs e)
         {
-
-        }
-        private void ExitMenuButton_Click(object sender, RoutedEventArgs e)
-        {
-            EscapeMenu.Visibility = Visibility.Hidden;
-            Exit();
+            if (QOL.IsVis(ConsoleMenu))
+                ConsoleMenu.Visibility = Visibility.Collapsed;
+            else
+                ConsoleMenu.Visibility = Visibility.Visible;
         }
         private void DebugMenuButton_Click(object sender, RoutedEventArgs e)
         {
-            if (CurrentMode == null) return;
             if (QOL.IsVis(DebugMenu))
             {
                 DebugText.Visibility = Visibility.Visible;
@@ -215,6 +213,16 @@ namespace Darakombi
             }
         }
 
+        private void ExitButton_Click(object sender, RoutedEventArgs e)
+        {
+            EscapeMenu.Visibility = Visibility.Collapsed;
+            Exit();
+        }
+        private void OptionsButton_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
         private HashSet<Key> IgnoredKeys = [Key.LeftAlt, Key.RightAlt, Key.Capital, Key.LWin, Key.RWin];
         private Key GetRealKey(KeyEventArgs e) => (e.Key == Key.System) ? e.SystemKey : e.Key;
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -222,7 +230,7 @@ namespace Darakombi
             var key = GetRealKey(e);
             if (IgnoredKeys.Contains(key))
                 e.Handled = true;
-            if (key == Key.Tab && MapMenu.Visibility == Visibility.Hidden)
+            if (key == Key.Tab && MapMenu.Visibility == Visibility.Collapsed)
                 e.Handled = true;
         }
         private void Window_KeyDown(object sender, KeyEventArgs e)
@@ -232,7 +240,13 @@ namespace Darakombi
             if (!e.IsRepeat) PressedKeys.Add(key);
 
             if (PressedKeys.Contains(Key.Escape)) Escape();
-            if (PressedKeys.Contains(Key.OemTilde)) DebugMenuButton_Click(null, null);
+            if (PressedKeys.Contains(Key.OemTilde))
+            {
+                if (PressedKeys.Contains(Key.LeftShift) || PressedKeys.Contains(Key.RightShift))
+                    DebugMenuButton_Click(null, null);
+                else ConsoleButton_Click(null, null);
+            }
+            //if (PressedKeys.Contains(Key.P)) QOL.WriteOut(EditorHUD.Visibility);
         }
         private void Window_KeyUp(object sender, KeyEventArgs e)
         {
@@ -299,7 +313,7 @@ namespace Darakombi
             bool isShown = GameManager?.SpatialCellGrid?.Visibility == Visibility.Visible;
             if (isShown)
             {
-                GameManager?.SpatialCellGrid?.Visibility = Visibility.Hidden;
+                GameManager?.SpatialCellGrid?.Visibility = Visibility.Collapsed;
                 GridBool.Content = "OFF";
                 GridBool.Foreground = Brushes.IndianRed;
             }
@@ -313,28 +327,26 @@ namespace Darakombi
 
         private void EditorSave_Click(object sender, RoutedEventArgs e)
         {
-            EditorQuitWarning.Visibility = Visibility.Hidden;
+            EditorQuitWarning.Visibility = Visibility.Collapsed;
             if (EditorManager.Editor?.Tiles.Count > 0)
             {
                 EditorManager?.Editor?.Save("MapSave.txt", Map.Size);
                 EditorManager?.Editor?.Saved = true;
             }
         }
-        private void ChooseButton_Click(object sender, RoutedEventArgs e)
+        private void ColorPickerTitle_Click(object sender, RoutedEventArgs e)
         {
-            var dialog = new OpenFileDialog()
+            if (QOL.IsVis(EditorColorSliders))
             {
-                Title = "Pick serialized map",
-                Filter = "Text files (*.txt)|*.txt",
-                DefaultExt = ".txt",
-                Multiselect = false,
-            };
-            bool? result = dialog.ShowDialog();
-            if (result == true)
+                EditorColorSliders.Visibility = Visibility.Collapsed;
+                ColorPickerBool.Content = "OFF";
+                ColorPickerBool.Tag = "#b3251b";
+            }
+            else
             {
-                EditorButton_Click(null, null);
-                EditorManager.Editor?.Clear();
-                EditorManager.Editor?.Load(dialog.FileName);
+                EditorColorSliders.Visibility = Visibility.Visible;
+                ColorPickerBool.Content = "ON";
+                ColorPickerBool.Tag = "#44B73E";
             }
         }
 
@@ -374,7 +386,7 @@ namespace Darakombi
             {
                 if (TryMapSize(width, height))
                 {
-                    MapMenu.Visibility = Visibility.Hidden;
+                    MapMenu.Visibility = Visibility.Collapsed;
                     StartMenu.Visibility = Visibility.Visible;
                 }
             }
@@ -422,7 +434,7 @@ namespace Darakombi
             bool isShown = EditorManager.EditorGrid?.Visibility == Visibility.Visible;
             if (isShown)
             {
-                EditorManager.EditorGrid?.Visibility = Visibility.Hidden;
+                EditorManager.EditorGrid?.Visibility = Visibility.Collapsed;
                 EditorGridBool.Content = "OFF";
                 EditorGridBool.Foreground = Brushes.IndianRed;
             }
@@ -437,7 +449,7 @@ namespace Darakombi
         {
             if (EditorManager?.ChunkGrid?.Visibility == Visibility.Visible)
             {
-                EditorManager?.ChunkGrid?.Visibility = Visibility.Hidden;
+                EditorManager?.ChunkGrid?.Visibility = Visibility.Collapsed;
                 EditorChunkGridBool.Foreground = Brushes.IndianRed;
                 EditorChunkGridBool.Content = "OFF";
             }
@@ -451,14 +463,14 @@ namespace Darakombi
 
         private void MapButton_Click(object sender, RoutedEventArgs e)
         {
-            StartMenu.Visibility = Visibility.Hidden;
+            StartMenu.Visibility = Visibility.Collapsed;
             MapMenu.Visibility = Visibility.Visible;
             MapButton.Foreground = Brushes.White;
         }
         private void EditorDiscardButton_Click(object sender, RoutedEventArgs e)
         {
             EditorManager.Editor?.Clear();
-            EditorQuitWarning.Visibility = Visibility.Hidden;
+            EditorQuitWarning.Visibility = Visibility.Collapsed;
         }
 
         private void AddElementToCanvas(UIElement element, int zIndex)
@@ -474,6 +486,7 @@ namespace Darakombi
             Map = new(MapSize);
             AddElementToCanvas(Map, 0);
             MapButton.Foreground = Brushes.White;
+            MapSizeText.Text = $"{MapSize.Width}x{MapSize.Height}";
         }
         private void ResizeMap()
         {
@@ -530,10 +543,10 @@ namespace Darakombi
 
         private void PlayButton_Click(object sender, RoutedEventArgs e)
         {
-            if (GameManager == null) // leftover objects
+            if (GameManager == null)
             {
                 GameManager = new(new(WorldCanvas));
-                GameManager.HUD = GameHUD;
+                GameManager.HUD = GameProperties;
                 GameManager.AddElementToCanvas += AddElementToCanvas;
                 GameManager.RemoveElementFromCanvas += RemoveElementFromCanvas;
                 GameManager.ClearViewport += ClearViewport;
@@ -551,10 +564,11 @@ namespace Darakombi
         }
         private void EditorButton_Click(object sender, RoutedEventArgs e)
         {
-            if (EditorManager == null) // leftover objects
+            if (EditorManager == null)
             {
                 EditorManager = new();
                 EditorManager.HUD = EditorHUD;
+                EditorProperties.Visibility = Visibility.Visible;
                 EditorManager.AddElementToCanvas += AddElementToCanvas;
                 EditorManager.ResizeMap += TryMapSize;
             }
@@ -568,12 +582,39 @@ namespace Darakombi
             EditorManager = null;
         }
 
+        private void ChooseButton_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new OpenFileDialog()
+            {
+                Title = "Pick serialized map",
+                Filter = "Text files (*.txt)|*.txt",
+                DefaultExt = ".txt",
+                Multiselect = false,
+            };
+            bool? result = dialog.ShowDialog();
+            if (result == true)
+            {
+                EditorButton_Click(null, null);
+                EditorManager.Editor?.Clear();
+                EditorManager.Editor?.Load(dialog.FileName);
+            }
+        }
+
         private void InitializeMode(IManager mode)
         {
             if (CurrentMode == mode) return;
             CurrentMode = mode;
-            StartMenu.Visibility = Visibility.Hidden;
+            StartMenu.Visibility = Visibility.Collapsed;
+            RebuildConsole();
             Start();
+        }
+
+        private void RebuildConsole()
+        {
+            if (CurrentMode is GameManager)
+            {
+
+            }
         }
 
         private void Start()
@@ -617,19 +658,23 @@ namespace Darakombi
         private void Resume() => CurrentMode.Active = Active = true;
         private void Exit()
         {
-            DebugManager.Clear(); //!!!!
+            DebugManager.Clear();
             if (CurrentMode == null) return;
             CompositionTarget.Rendering -= OnRender;
             CurrentMode.End();
 
             if (CurrentMode is GameManager) DisposeGameManager();
-            if (CurrentMode is EditorManager) DisposeEditorManager();
+            if (CurrentMode is EditorManager)
+            {
+                DisposeEditorManager();
+                EditorProperties.Visibility = Visibility.Collapsed;
+            }
 
             Map = null;
             WorldCanvas.Children.Clear();
             ResetTransforms();
 
-            GameCanvas.Visibility = Visibility.Hidden;
+            GameCanvas.Visibility = Visibility.Collapsed;
             StartMenu.Visibility = Visibility.Visible;
         }
 
