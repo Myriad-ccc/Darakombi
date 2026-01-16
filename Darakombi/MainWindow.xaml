@@ -318,51 +318,33 @@
 
                 <Grid Margin="5">
 
-                    <StackPanel Orientation="Vertical">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="40" />
+                    </Grid.RowDefinitions>
 
-                        <TextBlock
-                            HorizontalAlignment="Left"
-                            Background="Transparent"
-                            FontSize="48"
-                            Foreground="White"
-                            Text="Quick" />
+                    <RichTextBox
+                        x:Name="CommandLog"
+                        Grid.Row="0"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        FontSize="30"
+                        Foreground="White"
+                        IsReadOnly="True"
+                        VerticalScrollBarVisibility="Hidden">
+                        <FlowDocument PagePadding="0" />
+                    </RichTextBox>
 
-                        <StackPanel
-                            x:Name="GameFunctions"
-                            HorizontalAlignment="Left"
-                            Orientation="Vertical"
-                            Visibility="Visible" />
-
-                        <StackPanel
-                            x:Name="EditorFunctions"
-                            HorizontalAlignment="Left"
-                            Orientation="Vertical"
-                            Visibility="Collapsed" />
-
-                    </StackPanel>
-
-                    <StackPanel
-                        HorizontalAlignment="Stretch"
-                        VerticalAlignment="Bottom"
-                        Orientation="Vertical">
-                        <TextBlock
-                            Margin="0,30,0,0"
-                            HorizontalAlignment="Left"
-                            Background="Transparent"
-                            FontSize="48"
-                            Foreground="White"
-                            Text="Command" />
-
-                        <TextBox
-                            x:Name="CommandLine"
-                            Height="40"
-                            HorizontalContentAlignment="Left"
-                            VerticalContentAlignment="Center"
-                            Background="#803C3C3C"
-                            BorderThickness="0"
-                            FontSize="36"
-                            Foreground="White" />
-                    </StackPanel>
+                    <TextBox
+                        x:Name="CommandLine"
+                        Grid.Row="1"
+                        HorizontalContentAlignment="Left"
+                        VerticalContentAlignment="Center"
+                        Background="#803C3C3C"
+                        BorderThickness="0"
+                        FontSize="36"
+                        Foreground="White"
+                        KeyDown="CommandLine_KeyDown" />
 
                 </Grid>
 
@@ -508,6 +490,7 @@
 
                 <Button
                     x:Name="EntityPicker"
+                    Margin="0,49,5,0"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Top"
                     BorderThickness="0"
@@ -515,10 +498,10 @@
                     Content="Picker"
                     FontSize="50"
                     Style="{StaticResource MenuButtonStyle}"
-                    Tag="{StaticResource CoolRed}" Margin="0,49,5,0">
+                    Tag="{StaticResource CoolRed}">
                     <Button.RenderTransformOrigin>0.5,0.5</Button.RenderTransformOrigin>
                     <Button.LayoutTransform>
-                        <RotateTransform Angle="270"/>
+                        <RotateTransform Angle="270" />
                     </Button.LayoutTransform>
                 </Button>
 
