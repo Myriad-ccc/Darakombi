@@ -9,7 +9,7 @@ global using System.Windows.Documents;
 global using System.Windows.Input;
 global using System.Windows.Media;
 global using static Darakombi.QOL;
-using System.Runtime.CompilerServices;
+using System.Collections;
 
 namespace Darakombi
 {
@@ -71,6 +71,13 @@ namespace Darakombi
         private SpatialGrid SpatialGrid => (CurrentMode as GameManager)?.SpatialGrid;
         private Editor Editor => (CurrentMode as EditorManager)?.Editor;
 
+        private Dictionary<object, SolidColorBrush> ResourceColors = [];
+        private Brush GetResourceColor(string color)
+        {
+            ResourceColors.TryGetValue(color, out var brush);
+            return brush;
+        }
+
         public MainWindow()
         {
             InitializeComponent();
@@ -79,6 +86,14 @@ namespace Darakombi
 
             TitleText.Foreground = RandomColor();
             TitleTextShadow.Foreground = RandomColor();
+
+            foreach (DictionaryEntry resource in Resources)
+                if (resource.Key is string color && resource.Value is SolidColorBrush brush)
+                    ResourceColors[color] = brush;
+
+            ConsoleManager.RegisterStaticCommands();
+            ConsoleManager.RegisterInstanceCommands(this);
+            ConsoleLogger.Logs = ConsoleLogs;
 
             MapWidthContent.Text = MapSize.Width.ToString();
             MapHeightContent.Text = MapSize.Height.ToString();
@@ -93,8 +108,8 @@ namespace Darakombi
             var fontSize = 36f;
             var background = Brushes.Transparent;
 
-            var onTag = FindResource("CoolGreen");
-            var offTag = FindResource("CoolRed");
+            var onTag = GetResourceColor("Green");
+            var offTag = GetResourceColor("Red");
 
             Style style = (Style)FindResource("MenuButtonStyle");
 
@@ -656,41 +671,33 @@ namespace Darakombi
 
         }
 
-        private void Log(string text, Brush color = null)
-        {
-            color ??= Brushes.White;
-
-            var span = new Run(text) { Foreground = color };
-            var paragraph = new Paragraph() { Padding = new(0), Margin = new(0) };
-
-            paragraph.Inlines.Add(span);
-
-            CommandLog.Document.Blocks.Add(paragraph);
-            CommandLog.ScrollToEnd();
-        }
-
         private void CommandLine_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
             {
                 string input = CommandLine.Text;
-                if (string.IsNullOrWhiteSpace(input)) return;
-                MapCommand(input);
-                CommandLine.Clear();
+                if (input.Length > 0)
+                {
+                    MapCommand(input);
+                    CommandLine.Clear();
+                }
+            }
+            else if (e.Key == Key.F1)
+            {
+                ConsoleLogger.IncludeTimeStamps = !ConsoleLogger.IncludeTimeStamps;
             }
         }
-        private string[] hm = ["Shocking", "Devastating", "Crestfalling"];
         private void MapCommand(string input)
         {
-            var tokens = input.Split(' ');
-            var command = tokens[0].ToLower();
-
-            switch (command)
-            {
-                default:
-                    Log($"{command} not found. {hm[Random.Shared.Next(hm.Length)]}.", (Brush)FindResource("CoolRed"));
-                    break;
-            }
+            ConsoleLogger.Log(ConsoleManager.Execute(input));
         }
+
+        private void CommandLine_TextChanged(object sender, TextChangedEventArgs e)
+        {
+
+        }
+
+        [Command("Greet")]
+        private void Greet(string name) => WriteOut($"hi {name}");
     }
 }

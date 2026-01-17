@@ -25,7 +25,5 @@
 
             DetectionRange = 200;
         }
-
-        public override string ToString() => $"und";
     }
 }

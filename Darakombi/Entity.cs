@@ -106,6 +106,8 @@ namespace Darakombi
             Overlay.Width = DetectionRange * 2;
             Overlay.Height = DetectionRange * 2;
         }
+
+        public override string ToString() => $"und";
     }
 
     public interface IEntityAttributes

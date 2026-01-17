@@ -25,6 +25,10 @@
 
     <Window.Resources>
 
+        <SolidColorBrush x:Key="CoolRed" Color="#b3251b" />
+        <SolidColorBrush x:Key="CoolDarkRed" Color="#701611" />
+        <SolidColorBrush x:Key="CoolGreen" Color="#44B73E" />
+
         <Style x:Key="MenuButtonStyle" TargetType="Button">
             <Setter Property="Tag" Value="#000000" />
             <Setter Property="Background" Value="Transparent" />
@@ -49,9 +53,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
-        <SolidColorBrush x:Key="CoolRed" Color="#b3251b" />
-        <SolidColorBrush x:Key="CoolGreen" Color="#44B73E" />
 
     </Window.Resources>
 
@@ -324,7 +325,7 @@
                     </Grid.RowDefinitions>
 
                     <RichTextBox
-                        x:Name="CommandLog"
+                        x:Name="ConsoleLogs"
                         Grid.Row="0"
                         Background="Transparent"
                         BorderThickness="0"
@@ -336,6 +337,16 @@
                     </RichTextBox>
 
                     <TextBox
+                        x:Name="CommandPredictive"
+                        Grid.Row="1"
+                        HorizontalContentAlignment="Left"
+                        VerticalContentAlignment="Center"
+                        Background="#803C3C3C"
+                        BorderThickness="0"
+                        FontSize="36"
+                        Foreground="Gray" />
+
+                    <TextBox
                         x:Name="CommandLine"
                         Grid.Row="1"
                         HorizontalContentAlignment="Left"
@@ -344,8 +355,8 @@
                         BorderThickness="0"
                         FontSize="36"
                         Foreground="White"
-                        KeyDown="CommandLine_KeyDown" />
-
+                        KeyDown="CommandLine_KeyDown"
+                        TextChanged="CommandLine_TextChanged"/>
                 </Grid>
 
             </Border>
@@ -448,7 +459,7 @@
                                 FontSize="50"
                                 FontWeight="SemiBold"
                                 Foreground="White"
-                                Text="Unsaved changes"
+                                Text="Unsaved 1changes"
                                 TextAlignment="Center" />
 
                             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
